@@ -15,9 +15,9 @@ A browser-based music note reading trainer. Shows a note on a staff, you identif
 
 ## Requirements
 
+- Python 3.6+ (for the local HTTP server)
 - A modern browser (Chrome, Firefox, Edge)
 - Salamander Grand Piano samples in the `SalamanderGrandPiano/` folder
-- A local HTTP server to serve the audio samples (see options below)
 
 ## Setup
 
