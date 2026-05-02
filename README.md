@@ -1,13 +1,13 @@
 # Note Quiz
 
-A browser-based music note reading trainer. Shows a note on a treble clef staff, you identify it on the piano keyboard. No timer, no pressure.
-
-![Note Quiz screenshot](https://i.imgur.com/placeholder.png)
+A browser-based music note reading trainer. Shows a note on a staff, you identify it on the piano keyboard. No timer, no pressure.
 
 ## Features
 
-- Treble clef note recognition (C4–A5)
-- Interactive piano keyboard with white and black keys
+- Treble and bass clef note recognition
+- Toggle between Treble, Bass, or Both clefs
+- Notes span C4–A5 (treble) and E2–C4 (bass), including middle C and ledger lines
+- Interactive piano keyboard — automatically shows the correct range for each clef
 - Real piano audio via the Salamander Grand Piano sample library
 - Score tracking with accuracy percentage and progress bar
 - Recent answers log
@@ -15,9 +15,9 @@ A browser-based music note reading trainer. Shows a note on a treble clef staff,
 
 ## Requirements
 
-- Python 3.6+ (for the local HTTP server)
 - A modern browser (Chrome, Firefox, Edge)
 - Salamander Grand Piano samples in the `SalamanderGrandPiano/` folder
+- A local HTTP server to serve the audio samples (see options below)
 
 ## Setup
 
@@ -35,27 +35,27 @@ A browser-based music note reading trainer. Shows a note on a treble clef staff,
 
 ## Running
 
-Double-click `start.bat` or run from the terminal:
-
+**Option 1 — Python** (double-click `start.bat` or run from the terminal):
 ```
 python -m http.server 8080
 ```
 
-Then open your browser to:
-
+**Option 2 — Node.js:**
 ```
-http://localhost:8080/note-quiz.html
+npx serve .
 ```
 
-Press **Ctrl+C** in the terminal to stop the server.
+**Option 3 — VS Code:** install the Live Server extension, right-click `note-quiz.html`, and choose "Open with Live Server."
+
+Then open your browser to `http://localhost:8080/note-quiz.html` (or the URL your server provides).
 
 ## Why a local server?
 
-The app loads audio samples via `fetch()`. Browsers block local file requests for security when opening HTML directly from disk (`file://`), so a minimal HTTP server is needed. Python's built-in server is all that's required — no installs.
+The app loads audio samples via `fetch()`. Browsers block local file requests for security when opening HTML directly from disk (`file://`), so a minimal HTTP server is needed. If you don't need audio, you can open the file directly in your browser.
 
 ## Audio
 
-The app uses 8 sampled notes from the Salamander Grand Piano (velocity layer `v8`) and pitch-shifts them via the Web Audio API `playbackRate` to cover the full C4–A5 range. To use a different velocity (1–16), edit this line in `note-quiz.html`:
+The app uses 8 sampled notes from the Salamander Grand Piano (velocity layer `v8`) and pitch-shifts them via the Web Audio API `playbackRate` to cover the full range. Bass notes below C4 are pitch-shifted down from the C4 sample. To use a different velocity (1–16), edit this line in `note-quiz.html`:
 
 ```js
 const SAMPLE_VELOCITY = 'v8';
