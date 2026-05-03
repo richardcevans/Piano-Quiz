@@ -208,6 +208,62 @@
   .black-key:active { background: #475569; }
   .black-key.correct-flash { background: #166534 !important; transition: none; }
   .black-key.wrong-flash   { background: #7f1d1d !important; transition: none; }
+
+  /* ── Set summary overlay ── */
+  .card { position: relative; overflow: hidden; }
+  .set-summary {
+    position: absolute; inset: 0;
+    background: white; border-radius: 1.5rem;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 28px 24px; gap: 16px;
+    animation: fadeIn 0.3s ease;
+    overflow-y: auto;
+  }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+  .summary-score-wrap { text-align: center; }
+  .summary-score-num  { font-size: 3.5rem; font-weight: 900; color: #1e1b4b; line-height: 1; letter-spacing: -0.04em; }
+  .summary-score-den  { font-size: 1rem; font-weight: 700; color: #94a3b8; }
+  .summary-acc        { font-size: 1.1rem; font-weight: 800; color: #6d28d9; }
+
+  .summary-section { width: 100%; }
+  .summary-section-label {
+    font-size: 0.6rem; font-weight: 800; text-transform: uppercase;
+    letter-spacing: 0.18em; color: #94a3b8; margin-bottom: 6px;
+  }
+  .miss-chips { display: flex; flex-wrap: wrap; gap: 5px; }
+  .miss-chip {
+    background: #fef2f2; color: #991b1b; border: 1px solid #fecaca;
+    border-radius: 99px; padding: 3px 10px;
+    font-size: 0.75rem; font-weight: 800;
+  }
+  .no-misses { font-size: 0.82rem; font-weight: 700; color: #10b981; }
+
+  .history-table { width: 100%; border-collapse: collapse; }
+  .history-table th {
+    font-size: 0.58rem; font-weight: 800; text-transform: uppercase;
+    letter-spacing: 0.14em; color: #94a3b8; text-align: left;
+    padding: 4px 6px; border-bottom: 1px solid #f1f5f9;
+  }
+  .history-table td {
+    font-size: 0.78rem; font-weight: 700; color: #334155;
+    padding: 5px 6px; border-bottom: 1px solid #f8fafc;
+  }
+  .history-table tr:last-child td { border-bottom: none; }
+  .history-table td.acc-cell { color: #6d28d9; }
+  .history-table tr.current-row td { color: #1e1b4b; font-weight: 900; }
+
+  .next-set-btn {
+    margin-top: 4px;
+    background: #5b21b6; color: white;
+    border: none; border-radius: 99px;
+    padding: 11px 32px; font-size: 0.88rem; font-weight: 800;
+    cursor: pointer; transition: background 0.15s, transform 0.1s;
+    letter-spacing: 0.02em;
+  }
+  .next-set-btn:hover  { background: #4c1d95; }
+  .next-set-btn:active { transform: scale(0.97); }
 </style>
 </head>
 <body>
@@ -220,12 +276,12 @@
   <aside class="sidebar">
     <div class="scoreboard">
       <div class="score-box">
-        <div class="score-label">Correct</div>
-        <div class="score-value green" id="scoreCorrect">0</div>
+        <div class="score-label">Question</div>
+        <div class="score-value dark" id="scoreQuestion">0 / 20</div>
       </div>
       <div class="score-box">
-        <div class="score-label">Total</div>
-        <div class="score-value dark" id="scoreTotal">0</div>
+        <div class="score-label">Correct</div>
+        <div class="score-value green" id="scoreCorrect">0</div>
       </div>
       <div class="score-box">
         <div class="score-label">Accuracy</div>
@@ -236,13 +292,34 @@
       <div class="progress-bar-fill" id="progressBar" style="width:0%"></div>
     </div>
     <div class="recent">
-      <div class="recent-label">Recent Answers</div>
+      <div class="recent-label">This Set</div>
       <div class="answer-log" id="answerLog"></div>
     </div>
   </aside>
 
   <div class="card">
     <div class="top-bar"></div>
+
+    <!-- End-of-set summary overlay -->
+    <div class="set-summary" id="setSummary" style="display:none">
+      <div class="summary-score-wrap">
+        <div class="summary-score-num" id="summaryScore">0</div>
+        <div class="summary-score-den">out of 20</div>
+      </div>
+      <div class="summary-acc" id="summaryAcc">--%</div>
+      <div class="summary-section">
+        <div class="summary-section-label">Notes to review</div>
+        <div class="miss-chips" id="summaryMisses"></div>
+      </div>
+      <div class="summary-section">
+        <div class="summary-section-label">Set history</div>
+        <table class="history-table">
+          <thead><tr><th>Set</th><th>Score</th><th>Accuracy</th></tr></thead>
+          <tbody id="summaryHistory"></tbody>
+        </table>
+      </div>
+      <button class="next-set-btn" onclick="startNextSet()">Next Set &rarr;</button>
+    </div>
 
     <div class="clef-toggle">
       <button class="clef-btn active" data-clef="treble" onclick="setClef('treble',this)">Treble</button>
@@ -261,12 +338,21 @@
       <button class="hear-btn" id="hearBtn" onclick="hearCurrentNote()">
         &#128266; Hear note
       </button>
-      <div class="mode-toggle-wrap" onclick="toggleMode()" title="Practice mode plays the note automatically when a new question appears">
-        <span>Auto-play</span>
-        <div class="toggle-track" id="modeTrack">
-          <div class="toggle-thumb"></div>
+      <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end">
+        <div class="mode-toggle-wrap" onclick="toggleAccidentals()" title="Accidentals: sharps and flats">
+          <span>&#9839; Sharps &amp; Flats</span>
+          <div class="toggle-track" id="accTrack">
+            <div class="toggle-thumb"></div>
+          </div>
+          <span class="mode-label" id="accLabel">Off</span>
         </div>
-        <span class="mode-label" id="modeLabel">Off</span>
+        <div class="mode-toggle-wrap" onclick="toggleMode()" title="Practice mode plays the note automatically when a new question appears">
+          <span>Auto-play</span>
+          <div class="toggle-track" id="modeTrack">
+            <div class="toggle-thumb"></div>
+          </div>
+          <span class="mode-label" id="modeLabel">Off</span>
+        </div>
       </div>
     </div>
 
@@ -410,6 +496,18 @@ const TREBLE_NOTES = [
   { name:'A5', clef:'treble', y: 40, ledgerLines:[40] },
 ];
 
+const TREBLE_ACCIDENTALS = [
+  { name:'C#4', clef:'treble', y:160, ledgerLines:[160], acc:'#' },
+  { name:'D#4', clef:'treble', y:150, ledgerLines:[], acc:'#' },
+  { name:'F#4', clef:'treble', y:130, ledgerLines:[], acc:'#' },
+  { name:'G#4', clef:'treble', y:120, ledgerLines:[], acc:'#' },
+  { name:'A#4', clef:'treble', y:110, ledgerLines:[], acc:'#' },
+  { name:'C#5', clef:'treble', y: 90, ledgerLines:[], acc:'#' },
+  { name:'D#5', clef:'treble', y: 80, ledgerLines:[], acc:'#' },
+  { name:'F#5', clef:'treble', y: 60, ledgerLines:[], acc:'#' },
+  { name:'G#5', clef:'treble', y: 50, ledgerLines:[], acc:'#' },
+];
+
 // Bass clef staff lines: G2(140), B2(120), D3(100), F3(80), A3(60)
 // Spaces:               A2(130), C3(110), E3(90), G3(70)
 const BASS_NOTES = [
@@ -426,6 +524,17 @@ const BASS_NOTES = [
   { name:'A3', clef:'bass', y: 60, ledgerLines:[] },
   { name:'B3', clef:'bass', y: 50, ledgerLines:[] },
   { name:'C4', clef:'bass', y: 40, ledgerLines:[40] },
+];
+
+const BASS_ACCIDENTALS = [
+  { name:'F#2', clef:'bass', y:150, ledgerLines:[], acc:'#' },
+  { name:'G#2', clef:'bass', y:140, ledgerLines:[], acc:'#' },
+  { name:'A#2', clef:'bass', y:130, ledgerLines:[], acc:'#' },
+  { name:'C#3', clef:'bass', y:110, ledgerLines:[], acc:'#' },
+  { name:'D#3', clef:'bass', y:100, ledgerLines:[], acc:'#' },
+  { name:'F#3', clef:'bass', y: 80, ledgerLines:[], acc:'#' },
+  { name:'G#3', clef:'bass', y: 70, ledgerLines:[], acc:'#' },
+  { name:'A#3', clef:'bass', y: 60, ledgerLines:[], acc:'#' },
 ];
 
 // ── Keyboard layouts ─────────────────────────────────────────────────────────
@@ -453,15 +562,42 @@ const BASS_BLACK = [
 ];
 
 // ── State ────────────────────────────────────────────────────────────────────
-let correct = 0, total = 0, currentNote = null, answered = false;
+const SET_SIZE = 20;
+let setQuestion = 0;   // questions answered in current set
+let setCorrect  = 0;   // correct answers in current set
+let setNumber   = 1;   // which set we're on
+let setHistory  = [];  // [{set, score, acc}]
+let noteStats   = {};  // {noteName: {w: wrong count}} -- cumulative across sets
+let currentSetMisses = []; // notes answered wrong this set
+
+let currentNote = null, answered = false;
 let clefMode = 'treble'; // 'treble' | 'both' | 'bass'
+let includeAccidentals = false;
 
 // ── Clef toggle ──────────────────────────────────────────────────────────────
 function setClef(mode, btnEl) {
   clefMode = mode;
   document.querySelectorAll('.clef-btn').forEach(b => b.classList.remove('active'));
   btnEl.classList.add('active');
+  resetSet();
+}
+
+function resetSet() {
+  setQuestion      = 0;
+  setCorrect       = 0;
+  currentSetMisses = [];
+  document.getElementById('answerLog').innerHTML = '';
+  document.getElementById('setSummary').style.display = 'none';
+  updateScore();
   nextQuestion();
+}
+
+// ── Accidentals toggle ───────────────────────────────────────────────────────
+function toggleAccidentals() {
+  includeAccidentals = !includeAccidentals;
+  document.getElementById('accTrack').classList.toggle('on', includeAccidentals);
+  document.getElementById('accLabel').textContent = includeAccidentals ? 'On' : 'Off';
+  resetSet();
 }
 
 // ── Build piano keyboard ─────────────────────────────────────────────────────
@@ -539,6 +675,19 @@ function drawStaff(note) {
     svg.appendChild(l);
   });
 
+  // Accidental symbol (sharp)
+  if (note.acc === '#') {
+    const sharp = ns('text');
+    sharp.setAttribute('x', '173');
+    sharp.setAttribute('y', note.y + 6);
+    sharp.setAttribute('font-size', '22');
+    sharp.setAttribute('font-family', 'serif');
+    sharp.setAttribute('font-weight', 'bold');
+    sharp.setAttribute('fill', '#1e293b');
+    sharp.textContent = '\u266F';
+    svg.appendChild(sharp);
+  }
+
   // Note head
   const head = ns('ellipse');
   head.setAttribute('cx','200'); head.setAttribute('cy', note.y);
@@ -560,9 +709,12 @@ function drawStaff(note) {
 
 // ── Game logic ────────────────────────────────────────────────────────────────
 function getPool() {
-  if (clefMode === 'treble') return TREBLE_NOTES;
-  if (clefMode === 'bass')   return BASS_NOTES;
-  return [...TREBLE_NOTES, ...BASS_NOTES]; // both
+  let natural, accs;
+  if (clefMode === 'treble')     { natural = TREBLE_NOTES; accs = TREBLE_ACCIDENTALS; }
+  else if (clefMode === 'bass')  { natural = BASS_NOTES;   accs = BASS_ACCIDENTALS;   }
+  else                           { natural = [...TREBLE_NOTES, ...BASS_NOTES];
+                                   accs    = [...TREBLE_ACCIDENTALS, ...BASS_ACCIDENTALS]; }
+  return includeAccidentals ? [...natural, ...accs] : natural;
 }
 
 function nextQuestion() {
@@ -599,12 +751,12 @@ function nextQuestion() {
 function handleAnswer(noteName, btn) {
   if (answered) return;
   answered = true;
-  total++;
+  setQuestion++;
 
   const isCorrect = noteName === currentNote.name;
 
   if (isCorrect) {
-    correct++;
+    setCorrect++;
     btn.classList.add('correct-flash');
     showFeedback('\u2713 Correct!', 'correct');
   } else {
@@ -614,11 +766,21 @@ function handleAnswer(noteName, btn) {
     });
     setTimeout(() => playNote(currentNote.name), 350);
     showFeedback('\u2717 ' + noteName.replace(/\d/, '') + ' \u2014 it was ' + currentNote.name, 'wrong');
+    // Track miss
+    const n = currentNote.name;
+    if (!noteStats[n]) noteStats[n] = { w: 0 };
+    noteStats[n].w++;
+    if (!currentSetMisses.includes(n)) currentSetMisses.push(n);
   }
 
   updateScore();
   logAnswer(currentNote.name, isCorrect);
-  setTimeout(nextQuestion, 1700);
+
+  if (setQuestion >= SET_SIZE) {
+    setTimeout(endOfSet, 1700);
+  } else {
+    setTimeout(nextQuestion, 1700);
+  }
 }
 
 function showFeedback(msg, type) {
@@ -628,11 +790,59 @@ function showFeedback(msg, type) {
 }
 
 function updateScore() {
-  document.getElementById('scoreCorrect').textContent = correct;
-  document.getElementById('scoreTotal').textContent = total;
-  const pct = total ? Math.round(correct / total * 100) : 0;
-  document.getElementById('scoreAcc').textContent = total ? pct + '%' : '--';
-  document.getElementById('progressBar').style.width = pct + '%';
+  document.getElementById('scoreQuestion').textContent = setQuestion + ' / ' + SET_SIZE;
+  document.getElementById('scoreCorrect').textContent  = setCorrect;
+  const pct = setQuestion ? Math.round(setCorrect / setQuestion * 100) : 0;
+  document.getElementById('scoreAcc').textContent      = setQuestion ? pct + '%' : '--';
+  document.getElementById('progressBar').style.width   = (setQuestion / SET_SIZE * 100) + '%';
+}
+
+function endOfSet() {
+  const pct = Math.round(setCorrect / SET_SIZE * 100);
+  setHistory.push({ set: setNumber, score: setCorrect, acc: pct });
+
+  // Summary score
+  document.getElementById('summaryScore').textContent = setCorrect;
+  document.getElementById('summaryAcc').textContent   = pct + '%';
+
+  // Notes to review (this set's misses, sorted by total wrong count)
+  const missesEl = document.getElementById('summaryMisses');
+  missesEl.innerHTML = '';
+  if (currentSetMisses.length === 0) {
+    missesEl.innerHTML = '<span class="no-misses">\u2713 Perfect set!</span>';
+  } else {
+    const sorted = [...currentSetMisses].sort((a, b) => (noteStats[b]?.w || 0) - (noteStats[a]?.w || 0));
+    sorted.forEach(n => {
+      const chip = document.createElement('span');
+      chip.className = 'miss-chip';
+      chip.textContent = n + ' \u00d7' + (noteStats[n]?.w || 1);
+      missesEl.appendChild(chip);
+    });
+  }
+
+  // Set history table (most recent first, max 8 rows)
+  const tbody = document.getElementById('summaryHistory');
+  tbody.innerHTML = '';
+  const recent = [...setHistory].reverse().slice(0, 8);
+  recent.forEach((h, i) => {
+    const tr = document.createElement('tr');
+    if (i === 0) tr.className = 'current-row';
+    tr.innerHTML = '<td>' + h.set + '</td><td>' + h.score + ' / ' + SET_SIZE + '</td><td class="acc-cell">' + h.acc + '%</td>';
+    tbody.appendChild(tr);
+  });
+
+  document.getElementById('setSummary').style.display = 'flex';
+}
+
+function startNextSet() {
+  setNumber++;
+  setQuestion     = 0;
+  setCorrect      = 0;
+  currentSetMisses = [];
+  document.getElementById('setSummary').style.display = 'none';
+  document.getElementById('answerLog').innerHTML = '';
+  updateScore();
+  nextQuestion();
 }
 
 function logAnswer(noteName, isCorrect) {
@@ -641,9 +851,10 @@ function logAnswer(noteName, isCorrect) {
   item.className = 'answer-item ' + (isCorrect ? 'c' : 'w');
   item.innerHTML = '<span>' + noteName + '</span><span>' + (isCorrect ? '\u2713' : '\u2717') + '</span>';
   log.insertBefore(item, log.firstChild);
-  if (log.children.length > 12) log.removeChild(log.lastChild);
+  if (log.children.length > SET_SIZE) log.removeChild(log.lastChild);
 }
 
+updateScore();
 nextQuestion();
 </script>
 </body>
