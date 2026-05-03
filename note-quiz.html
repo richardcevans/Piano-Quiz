@@ -315,7 +315,7 @@
       <div class="summary-section">
         <div class="summary-section-label">Set history</div>
         <table class="history-table">
-          <thead><tr><th>Set</th><th>Score</th><th>Accuracy</th></tr></thead>
+          <thead><tr><th>Set</th><th>Score</th><th>Accuracy</th><th>Clef</th></tr></thead>
           <tbody id="summaryHistory"></tbody>
         </table>
       </div>
@@ -799,7 +799,8 @@ function updateScore() {
 
 function endOfSet() {
   const pct = Math.round(setCorrect / SET_SIZE * 100);
-  setHistory.push({ set: setHistory.length + 1, score: setCorrect, acc: pct });
+  const clefLabel = clefMode === 'treble' ? 'Treble' : clefMode === 'bass' ? 'Bass' : 'Both';
+  setHistory.push({ set: setHistory.length + 1, score: setCorrect, acc: pct, clef: clefLabel });
 
   // Summary score
   document.getElementById('summaryScore').textContent = setCorrect;
@@ -827,7 +828,7 @@ function endOfSet() {
   recent.forEach((h, i) => {
     const tr = document.createElement('tr');
     if (i === 0) tr.className = 'current-row';
-    tr.innerHTML = '<td>' + h.set + '</td><td>' + h.score + ' / ' + SET_SIZE + '</td><td class="acc-cell">' + h.acc + '%</td>';
+    tr.innerHTML = '<td>' + h.set + '</td><td>' + h.score + ' / ' + SET_SIZE + '</td><td class="acc-cell">' + h.acc + '%</td><td>' + h.clef + '</td>';
     tbody.appendChild(tr);
   });
 
