@@ -7,10 +7,12 @@ A browser-based music note reading trainer. Shows a note on a staff, you identif
 - Treble and bass clef note recognition
 - Toggle between Treble, Bass, or Both clefs
 - Notes span C4–A5 (treble) and E2–C4 (bass), including middle C and ledger lines
+- Sharps & Flats toggle — adds accidentals to the note pool when you're ready
 - Interactive piano keyboard — automatically shows the correct range for each clef
+- Sets of 20 questions with live progress counter (Q 7 / 20)
+- End-of-set summary showing score, accuracy, and notes to review
+- Set history table so you can track improvement over time
 - Real piano audio via the Salamander Grand Piano sample library
-- Score tracking with accuracy percentage and progress bar
-- Recent answers log
 - Auto-play mode — plays the note automatically on each new question
 
 ## Requirements
