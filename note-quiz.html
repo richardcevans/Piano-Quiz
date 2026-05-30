@@ -125,6 +125,43 @@
     margin-bottom: 12px;
   }
 
+  /* ── Mnemonic side-panel overlay ── */
+  .mnem-overlay {
+    position: absolute; top: 0; right: 0; bottom: 0;
+    width: 0; overflow: hidden;
+    background: white;
+    border-left: 1.5px solid #ede9fe;
+    border-radius: 0 1rem 1rem 0;
+    transition: width 0.25s ease;
+    display: flex; flex-direction: column;
+    justify-content: center;
+    z-index: 10;
+  }
+  .mnem-overlay.open { width: 195px; }
+  .mnem-overlay-inner {
+    padding: 12px 14px;
+    width: 195px;
+    flex-shrink: 0;
+  }
+  .mo-section { margin-bottom: 10px; }
+  .mo-kind {
+    font-size: 0.55rem; font-weight: 800; text-transform: uppercase;
+    letter-spacing: 0.18em; margin-bottom: 5px;
+  }
+  .mo-phrase {
+    font-size: 0.72rem; font-weight: 900; margin-bottom: 5px;
+    letter-spacing: -0.01em; line-height: 1.2;
+  }
+  .mo-rows { display: flex; flex-direction: column; gap: 3px; }
+  .mo-row { display: flex; align-items: center; gap: 6px; font-size: 0.72rem; font-weight: 700; color: #334155; }
+  .mo-badge {
+    width: 22px; height: 22px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.68rem; font-weight: 900; flex-shrink: 0;
+  }
+  .mo-word { color: #94a3b8; font-weight: 600; }
+  .mo-divider { border: none; border-top: 1px solid #f1f5f9; margin: 8px 0; }
+
   .controls-row {
     display: flex;
     align-items: center;
@@ -265,6 +302,19 @@
   }
   .next-set-btn:hover  { background: #4c1d95; }
   .next-set-btn:active { transform: scale(0.97); }
+
+  /* ── Help button ── */
+  .help-btn {
+    display: flex; align-items: center; gap: 6px;
+    background: #f5f3ff; color: #5b21b6;
+    border: 1.5px solid #c4b5fd; border-radius: 99px;
+    padding: 7px 14px; font-size: 0.78rem; font-weight: 800;
+    cursor: pointer; transition: background 0.15s, transform 0.1s;
+  }
+  .help-btn:hover  { background: #ede9fe; }
+  .help-btn:active { transform: scale(0.95); }
+  .help-btn.active { background: #5b21b6; color: white; border-color: #5b21b6; }
+
 </style>
 </head>
 <body>
@@ -338,6 +388,9 @@
     <div class="controls-row">
       <button class="hear-btn" id="hearBtn" onclick="hearCurrentNote()">
         &#128266; Hear note
+      </button>
+      <button class="help-btn" onclick="toggleHelp()">
+        &#127358; Help
       </button>
       <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end">
         <div class="mode-toggle-wrap" onclick="toggleAccidentals()" title="Accidentals: sharps and flats">
@@ -573,6 +626,7 @@ let currentSetMisses = []; // notes answered wrong this set
 let currentNote = null, answered = false;
 let clefMode = 'treble'; // 'treble' | 'both' | 'bass'
 let includeAccidentals = false;
+let helpOpen = false;
 
 // ── Clef toggle ──────────────────────────────────────────────────────────────
 function setClef(mode, btnEl) {
@@ -632,17 +686,46 @@ function buildPiano(whiteKeys, blackKeys) {
 }
 
 // ── Staff drawing ─────────────────────────────────────────────────────────────
+// ── Staff drawing ─────────────────────────────────────────────────────────────
 function ns(tag) { return document.createElementNS('http://www.w3.org/2000/svg', tag); }
+
+const STAFF_LABELS = {
+  treble: {
+    140: { letter:'E', word:'Every'  },
+    130: { letter:'F', word:''       },
+    120: { letter:'G', word:'Good'   },
+    110: { letter:'A', word:''       },
+    100: { letter:'B', word:'Boy'    },
+     90: { letter:'C', word:''       },
+     80: { letter:'D', word:'Does'   },
+     70: { letter:'E', word:''       },
+     60: { letter:'F', word:'Fine'   },
+  },
+  bass: {
+    140: { letter:'G', word:'Grizzly'  },
+    130: { letter:'A', word:''         },
+    120: { letter:'B', word:'Bears'    },
+    110: { letter:'C', word:''         },
+    100: { letter:'D', word:"Don't"    },
+     90: { letter:'E', word:''         },
+     80: { letter:'F', word:'Fear'     },
+     70: { letter:'G', word:''         },
+     60: { letter:'A', word:'Anything' },
+  }
+};
+const LINE_YS = new Set([60, 80, 100, 120, 140]);
 
 function drawStaff(note) {
   const svg = document.getElementById('staffSvg');
   svg.innerHTML = '';
 
+  const lineX2 = helpOpen ? '238' : '360';
+
   // Five staff lines
   for (let i = 0; i < 5; i++) {
     const y = 60 + i * 20;
     const ln = ns('line');
-    ln.setAttribute('x1','20'); ln.setAttribute('x2','360');
+    ln.setAttribute('x1','20'); ln.setAttribute('x2', lineX2);
     ln.setAttribute('y1', y);  ln.setAttribute('y2', y);
     ln.setAttribute('stroke','#c8d0dd'); ln.setAttribute('stroke-width','1.6');
     svg.appendChild(ln);
@@ -652,19 +735,60 @@ function drawStaff(note) {
   const clef = ns('text');
   clef.setAttribute('font-family','serif');
   clef.setAttribute('fill','#334155');
-
   if (note.clef === 'bass') {
-    // Bass clef (𝄢 = U+1D122)
     clef.setAttribute('x','22'); clef.setAttribute('y','108');
     clef.setAttribute('font-size','68');
-    clef.textContent = '\uD834\uDD22';
+    clef.textContent = '𝄢';
   } else {
-    // Treble clef (𝄞 = U+1D11E)
     clef.setAttribute('x','30'); clef.setAttribute('y','132');
     clef.setAttribute('font-size','96');
-    clef.textContent = '\uD834\uDD1E';
+    clef.textContent = '𝄞';
   }
   svg.appendChild(clef);
+
+  // Help labels: note badge + mnemonic word beside every line and space
+  if (helpOpen) {
+    const labels = STAFF_LABELS[note.clef];
+    const isBass = note.clef === 'bass';
+    const LX = 248;
+
+    const div = ns('line');
+    div.setAttribute('x1','242'); div.setAttribute('x2','242');
+    div.setAttribute('y1','52');  div.setAttribute('y2','148');
+    div.setAttribute('stroke','#e2e8f0'); div.setAttribute('stroke-width','1');
+    svg.appendChild(div);
+
+    Object.entries(labels).forEach(([yStr, info]) => {
+      const y = parseInt(yStr);
+      const onLine = LINE_YS.has(y);
+      const circleFill  = onLine ? (isBass ? '#fef3c7' : '#ede9fe') : (isBass ? '#fee2e2' : '#d1fae5');
+      const letterColor = onLine ? (isBass ? '#78350f' : '#4c1d95') : (isBass ? '#7f1d1d' : '#064e3b');
+
+      const circle = ns('circle');
+      circle.setAttribute('cx', LX + 11); circle.setAttribute('cy', y); circle.setAttribute('r','10');
+      circle.setAttribute('fill', circleFill);
+      svg.appendChild(circle);
+
+      const lText = ns('text');
+      lText.setAttribute('x', LX + 11); lText.setAttribute('y', y + 4);
+      lText.setAttribute('text-anchor','middle');
+      lText.setAttribute('font-size','11'); lText.setAttribute('font-weight','800');
+      lText.setAttribute('font-family','system-ui,sans-serif');
+      lText.setAttribute('fill', letterColor);
+      lText.textContent = info.letter;
+      svg.appendChild(lText);
+
+      if (info.word) {
+        const wText = ns('text');
+        wText.setAttribute('x', LX + 25); wText.setAttribute('y', y + 4);
+        wText.setAttribute('font-size','10'); wText.setAttribute('font-weight','600');
+        wText.setAttribute('font-family','system-ui,sans-serif');
+        wText.setAttribute('fill','#94a3b8');
+        wText.textContent = info.word;
+        svg.appendChild(wText);
+      }
+    });
+  }
 
   // Ledger lines
   note.ledgerLines.forEach(ly => {
@@ -678,13 +802,10 @@ function drawStaff(note) {
   // Accidental symbol (sharp)
   if (note.acc === '#') {
     const sharp = ns('text');
-    sharp.setAttribute('x', '173');
-    sharp.setAttribute('y', note.y + 6);
-    sharp.setAttribute('font-size', '22');
-    sharp.setAttribute('font-family', 'serif');
-    sharp.setAttribute('font-weight', 'bold');
-    sharp.setAttribute('fill', '#1e293b');
-    sharp.textContent = '\u266F';
+    sharp.setAttribute('x','173'); sharp.setAttribute('y', note.y + 6);
+    sharp.setAttribute('font-size','22'); sharp.setAttribute('font-family','serif');
+    sharp.setAttribute('font-weight','bold'); sharp.setAttribute('fill','#1e293b');
+    sharp.textContent = '♯';
     svg.appendChild(sharp);
   }
 
@@ -696,7 +817,7 @@ function drawStaff(note) {
   head.setAttribute('transform', 'rotate(-18, 200, ' + note.y + ')');
   svg.appendChild(head);
 
-  // Stem: up when at/below middle line (y>=100), down when above
+  // Stem
   const stemUp = note.y >= 100;
   const sx  = stemUp ? 212 : 188;
   const sy2 = stemUp ? note.y - 55 : note.y + 55;
@@ -856,6 +977,17 @@ function logAnswer(noteName, isCorrect) {
 
 updateScore();
 nextQuestion();
+
+// ── Help toggle — redraws staff with inline note labels ──────────────────────
+function toggleHelp() {
+  helpOpen = !helpOpen;
+  document.querySelector('.help-btn').classList.toggle('active', helpOpen);
+  if (currentNote) drawStaff(currentNote);
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && helpOpen) toggleHelp();
+});
 </script>
 </body>
 </html>
