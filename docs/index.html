@@ -315,6 +315,31 @@
   .help-btn:active { transform: scale(0.95); }
   .help-btn.active { background: #5b21b6; color: white; border-color: #5b21b6; }
 
+
+  /* ── Phone layout ── */
+  button { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+  @media (max-width: 640px) {
+    body { padding: 10px; }
+    h1 { font-size: 1.4rem; }
+    .subtitle { margin-bottom: 10px; }
+    .layout { flex-direction: column; gap: 10px; }
+    .sidebar { width: 100%; position: static; gap: 6px; }
+    .scoreboard { flex-direction: row; gap: 6px; }
+    .score-box { flex: 1; flex-direction: column; align-items: flex-start; gap: 2px; padding: 6px 10px; }
+    .score-value { font-size: 1.1rem; }
+    .recent-label { display: none; }
+    .answer-log { flex-direction: row; flex-wrap: wrap; max-height: 64px; gap: 4px; }
+    .answer-item { padding: 3px 8px; font-size: 0.7rem; gap: 6px; }
+    .card { padding: 14px; width: 100%; }
+    .top-bar { margin: -14px -14px 12px -14px; }
+    .controls-row { flex-wrap: wrap; row-gap: 10px; }
+    .controls-row > div { flex-direction: row !important; flex-wrap: wrap; gap: 8px 16px !important; align-items: center !important; width: 100%; }
+    .hear-btn, .help-btn { white-space: nowrap; padding: 10px 16px; }
+    .piano-section { padding: 8px; }
+    .white-key { height: 200px; }
+    .black-key { height: 122px; }
+    .staff-wrapper { padding: 8px 2px; }
+  }
 </style>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#5b21b6">
@@ -386,7 +411,7 @@
     <div class="question-title">Which note is shown?</div>
 
     <div class="staff-wrapper">
-      <svg id="staffSvg" width="380" height="190" style="overflow:visible"></svg>
+      <svg id="staffSvg" viewBox="0 0 400 190" style="width:100%;max-width:400px;height:auto;overflow:visible"></svg>
     </div>
 
     <div class="controls-row">
@@ -687,7 +712,22 @@ function buildPiano(whiteKeys, blackKeys) {
     blacksDiv.appendChild(btn);
   });
   pianoEl.appendChild(blacksDiv);
+  fitPiano();
 }
+
+
+// Scale the keyboard down to fit narrow screens (phones)
+function fitPiano() {
+  const pianoEl = document.getElementById('piano');
+  const box = document.querySelector('.piano-section');
+  if (!pianoEl || !box) return;
+  pianoEl.style.zoom = 1;
+  const cs = getComputedStyle(box);
+  const avail = box.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+  const need = pianoEl.scrollWidth;
+  pianoEl.style.zoom = need > avail ? (avail / need) : 1;
+}
+window.addEventListener('resize', fitPiano);
 
 // ── Staff drawing ─────────────────────────────────────────────────────────────
 // ── Staff drawing ─────────────────────────────────────────────────────────────
