@@ -1,0 +1,1004 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Note Quiz</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #f4f2f8;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 16px;
+  }
+  h1 { font-size: 1.6rem; font-weight: 900; color: #1e1b4b; letter-spacing: -0.04em; margin-bottom: 2px; }
+  .subtitle { font-size: 0.8rem; color: #6d28d9; font-weight: 600; margin-bottom: 14px; }
+
+  .layout {
+    display: flex;
+    flex-direction: row;
+    gap: 14px;
+    align-items: flex-start;
+    width: 100%;
+    max-width: 800px;
+  }
+
+  /* ── Sidebar ── */
+  .sidebar {
+    width: 190px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    position: sticky;
+    top: 16px;
+  }
+
+  .scoreboard { display: flex; flex-direction: column; gap: 6px; }
+  .score-box {
+    background: white;
+    border: 1px solid #ded6f7;
+    border-radius: 1rem;
+    padding: 8px 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 4px 12px rgba(76,29,149,0.06);
+  }
+  .score-label { font-size: 0.6rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.18em; color: #94a3b8; }
+  .score-value { font-size: 1.3rem; font-weight: 900; }
+  .score-value.green  { color: #10b981; }
+  .score-value.purple { color: #5b21b6; }
+  .score-value.dark   { color: #0f172a; }
+
+  .progress-bar-track { height: 5px; background: #ede9fe; border-radius: 99px; margin: 2px 0; }
+  .progress-bar-fill  { height: 5px; border-radius: 99px; background: linear-gradient(to right, #ef4444, #f59e0b, #10b981); transition: width 0.4s ease; }
+
+  .recent { display: flex; flex-direction: column; gap: 6px; }
+  .recent-label { font-size: 0.6rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.18em; color: #94a3b8; padding-left: 2px; }
+  .answer-log { display: flex; flex-direction: column; gap: 5px; max-height: 420px; overflow-y: auto; }
+  .answer-item {
+    display: flex; justify-content: space-between; align-items: center;
+    border-radius: 0.75rem; padding: 6px 12px;
+    font-size: 0.78rem; font-weight: 700;
+  }
+  .answer-item.c { background: #ecfdf5; color: #166534; border: 1px solid #bbf7d0; }
+  .answer-item.w { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
+
+  /* ── Quiz card ── */
+  .card {
+    flex: 1;
+    background: white;
+    border: 1px solid #ded6f7;
+    border-radius: 1.5rem;
+    box-shadow: 0 14px 40px rgba(76,29,149,0.08);
+    padding: 20px;
+    min-width: 0;
+  }
+  .top-bar {
+    height: 4px;
+    background: linear-gradient(to right, #5b21b6, #6d28d9, #ede9fe);
+    margin: -20px -20px 16px -20px;
+    border-radius: 1.5rem 1.5rem 0 0;
+  }
+
+  /* ── Clef toggle ── */
+  .clef-toggle {
+    display: flex;
+    gap: 5px;
+    margin-bottom: 12px;
+  }
+  .clef-btn {
+    flex: 1;
+    padding: 6px 8px;
+    font-size: 0.7rem;
+    font-weight: 800;
+    border: 1.5px solid #ded6f7;
+    border-radius: 99px;
+    background: white;
+    color: #94a3b8;
+    cursor: pointer;
+    transition: all 0.15s;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+  .clef-btn:hover { background: #f5f3ff; color: #5b21b6; border-color: #c4b5fd; }
+  .clef-btn.active { background: #5b21b6; color: white; border-color: #5b21b6; }
+  .clef-badge {
+    font-size: 0.65rem; font-weight: 800; text-transform: uppercase;
+    letter-spacing: 0.2em; color: #6d28d9; margin-bottom: 4px;
+  }
+
+  .question-title { font-size: 1.25rem; font-weight: 900; color: #0f172a; letter-spacing: -0.04em; margin-bottom: 12px; }
+
+  .staff-wrapper {
+    background: #fbfcff;
+    border: 1px solid #d9e0ea;
+    border-radius: 1rem;
+    padding: 8px 4px;
+    display: flex;
+    justify-content: center;
+    margin-bottom: 12px;
+  }
+
+  /* ── Mnemonic side-panel overlay ── */
+  .mnem-overlay {
+    position: absolute; top: 0; right: 0; bottom: 0;
+    width: 0; overflow: hidden;
+    background: white;
+    border-left: 1.5px solid #ede9fe;
+    border-radius: 0 1rem 1rem 0;
+    transition: width 0.25s ease;
+    display: flex; flex-direction: column;
+    justify-content: center;
+    z-index: 10;
+  }
+  .mnem-overlay.open { width: 195px; }
+  .mnem-overlay-inner {
+    padding: 12px 14px;
+    width: 195px;
+    flex-shrink: 0;
+  }
+  .mo-section { margin-bottom: 10px; }
+  .mo-kind {
+    font-size: 0.55rem; font-weight: 800; text-transform: uppercase;
+    letter-spacing: 0.18em; margin-bottom: 5px;
+  }
+  .mo-phrase {
+    font-size: 0.72rem; font-weight: 900; margin-bottom: 5px;
+    letter-spacing: -0.01em; line-height: 1.2;
+  }
+  .mo-rows { display: flex; flex-direction: column; gap: 3px; }
+  .mo-row { display: flex; align-items: center; gap: 6px; font-size: 0.72rem; font-weight: 700; color: #334155; }
+  .mo-badge {
+    width: 22px; height: 22px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.68rem; font-weight: 900; flex-shrink: 0;
+  }
+  .mo-word { color: #94a3b8; font-weight: 600; }
+  .mo-divider { border: none; border-top: 1px solid #f1f5f9; margin: 8px 0; }
+
+  .controls-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+  .hear-btn {
+    display: flex; align-items: center; gap: 6px;
+    background: #ede9fe; color: #5b21b6;
+    border: none; border-radius: 99px;
+    padding: 7px 14px; font-size: 0.78rem; font-weight: 800;
+    cursor: pointer; transition: background 0.15s, transform 0.1s;
+  }
+  .hear-btn:hover { background: #ddd6fe; }
+  .hear-btn:active { transform: scale(0.95); }
+
+  .mode-toggle-wrap {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 0.68rem; font-weight: 800; text-transform: uppercase;
+    letter-spacing: 0.12em; color: #94a3b8; cursor: pointer;
+  }
+  .toggle-track {
+    width: 38px; height: 20px; background: #e2e8f0;
+    border-radius: 99px; position: relative; transition: background 0.2s; flex-shrink: 0;
+  }
+  .toggle-track.on { background: #6d28d9; }
+  .toggle-thumb {
+    position: absolute; top: 2px; left: 2px;
+    width: 16px; height: 16px; background: white;
+    border-radius: 50%; transition: left 0.2s;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+  }
+  .toggle-track.on .toggle-thumb { left: 20px; }
+  .mode-label { color: #5b21b6; min-width: 18px; }
+
+  .feedback {
+    text-align: center; font-size: 0.88rem; font-weight: 800;
+    border-radius: 0.9rem; padding: 8px 16px; margin-bottom: 12px;
+    transition: opacity 0.3s; min-height: 36px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .feedback.correct { background: #ecfdf5; color: #166534; border: 1px solid #bbf7d0; }
+  .feedback.wrong   { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
+  .feedback.hidden  { opacity: 0; pointer-events: none; }
+
+  .piano-section {
+    background: #faf9fe; border: 1px solid #ede9fe;
+    border-radius: 1rem; padding: 12px; overflow-x: auto;
+  }
+  .piano-label { font-size: 0.6rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.18em; color: #94a3b8; margin-bottom: 10px; }
+  .piano-container { display: flex; justify-content: center; }
+  .piano { position: relative; display: inline-flex; }
+
+  .white-key {
+    width: 38px; height: 155px;
+    background: white; border: 1px solid #cbd5e1;
+    border-radius: 0 0 7px 7px; cursor: pointer; position: relative;
+    transition: background 0.08s;
+    display: flex; align-items: flex-end; justify-content: center;
+    padding-bottom: 8px; font-size: 0.58rem; font-weight: 700; color: #64748b;
+    user-select: none;
+  }
+  .white-key:hover { background: #f1f0ff; }
+  .white-key:active { background: #e0d9ff; }
+  .white-key.correct-flash { background: #bbf7d0 !important; transition: none; }
+  .white-key.wrong-flash   { background: #fecaca !important; transition: none; }
+
+  .blacks { position: absolute; top: 0; left: 0; pointer-events: none; }
+  .black-key {
+    width: 24px; height: 95px;
+    background: #1e293b; border: 1px solid #0f172a;
+    border-radius: 0 0 5px 5px; cursor: pointer;
+    position: absolute; top: 0; z-index: 10; pointer-events: all;
+    transition: background 0.08s;
+    display: flex; align-items: flex-end; justify-content: center;
+    padding-bottom: 6px; font-size: 0.45rem; font-weight: 700; color: #94a3b8;
+    user-select: none;
+  }
+  .black-key:hover { background: #334155; }
+  .black-key:active { background: #475569; }
+  .black-key.correct-flash { background: #166534 !important; transition: none; }
+  .black-key.wrong-flash   { background: #7f1d1d !important; transition: none; }
+
+  /* ── Set summary overlay ── */
+  .card { position: relative; overflow: hidden; }
+  .set-summary {
+    position: absolute; inset: 0;
+    background: white; border-radius: 1.5rem;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 28px 24px; gap: 16px;
+    animation: fadeIn 0.3s ease;
+    overflow-y: auto;
+    z-index: 20;
+  }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+  .summary-score-wrap { text-align: center; }
+  .summary-score-num  { font-size: 3.5rem; font-weight: 900; color: #1e1b4b; line-height: 1; letter-spacing: -0.04em; }
+  .summary-score-den  { font-size: 1rem; font-weight: 700; color: #94a3b8; }
+  .summary-acc        { font-size: 1.1rem; font-weight: 800; color: #6d28d9; }
+
+  .summary-section { width: 100%; }
+  .summary-section-label {
+    font-size: 0.6rem; font-weight: 800; text-transform: uppercase;
+    letter-spacing: 0.18em; color: #94a3b8; margin-bottom: 6px;
+  }
+  .miss-chips { display: flex; flex-wrap: wrap; gap: 5px; }
+  .miss-chip {
+    background: #fef2f2; color: #991b1b; border: 1px solid #fecaca;
+    border-radius: 99px; padding: 3px 10px;
+    font-size: 0.75rem; font-weight: 800;
+  }
+  .no-misses { font-size: 0.82rem; font-weight: 700; color: #10b981; }
+
+  .history-table { width: 100%; border-collapse: collapse; }
+  .history-table th {
+    font-size: 0.58rem; font-weight: 800; text-transform: uppercase;
+    letter-spacing: 0.14em; color: #94a3b8; text-align: left;
+    padding: 4px 6px; border-bottom: 1px solid #f1f5f9;
+  }
+  .history-table td {
+    font-size: 0.78rem; font-weight: 700; color: #334155;
+    padding: 5px 6px; border-bottom: 1px solid #f8fafc;
+  }
+  .history-table tr:last-child td { border-bottom: none; }
+  .history-table td.acc-cell { color: #6d28d9; }
+  .history-table tr.current-row td { color: #1e1b4b; font-weight: 900; }
+
+  .next-set-btn {
+    margin-top: 4px;
+    background: #5b21b6; color: white;
+    border: none; border-radius: 99px;
+    padding: 11px 32px; font-size: 0.88rem; font-weight: 800;
+    cursor: pointer; transition: background 0.15s, transform 0.1s;
+    letter-spacing: 0.02em;
+  }
+  .next-set-btn:hover  { background: #4c1d95; }
+  .next-set-btn:active { transform: scale(0.97); }
+
+  /* ── Help button ── */
+  .help-btn {
+    display: flex; align-items: center; gap: 6px;
+    background: #f5f3ff; color: #5b21b6;
+    border: 1.5px solid #c4b5fd; border-radius: 99px;
+    padding: 7px 14px; font-size: 0.78rem; font-weight: 800;
+    cursor: pointer; transition: background 0.15s, transform 0.1s;
+  }
+  .help-btn:hover  { background: #ede9fe; }
+  .help-btn:active { transform: scale(0.95); }
+  .help-btn.active { background: #5b21b6; color: white; border-color: #5b21b6; }
+
+</style>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#5b21b6">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+</head>
+<body>
+
+<h1>&#127925; Note Quiz</h1>
+<p class="subtitle">No timer. No pressure. Just read.</p>
+
+<div class="layout">
+
+  <aside class="sidebar">
+    <div class="scoreboard">
+      <div class="score-box">
+        <div class="score-label">Question</div>
+        <div class="score-value dark" id="scoreQuestion">0 / 20</div>
+      </div>
+      <div class="score-box">
+        <div class="score-label">Correct</div>
+        <div class="score-value green" id="scoreCorrect">0</div>
+      </div>
+      <div class="score-box">
+        <div class="score-label">Accuracy</div>
+        <div class="score-value purple" id="scoreAcc">--</div>
+      </div>
+    </div>
+    <div class="progress-bar-track">
+      <div class="progress-bar-fill" id="progressBar" style="width:0%"></div>
+    </div>
+    <div class="recent">
+      <div class="recent-label">This Set</div>
+      <div class="answer-log" id="answerLog"></div>
+    </div>
+  </aside>
+
+  <div class="card">
+    <div class="top-bar"></div>
+
+    <!-- End-of-set summary overlay -->
+    <div class="set-summary" id="setSummary" style="display:none">
+      <div class="summary-score-wrap">
+        <div class="summary-score-num" id="summaryScore">0</div>
+        <div class="summary-score-den">out of 20</div>
+      </div>
+      <div class="summary-acc" id="summaryAcc">--%</div>
+      <div class="summary-section">
+        <div class="summary-section-label">Notes to review</div>
+        <div class="miss-chips" id="summaryMisses"></div>
+      </div>
+      <div class="summary-section">
+        <div class="summary-section-label">Set history</div>
+        <table class="history-table">
+          <thead><tr><th>Set</th><th>Score</th><th>Accuracy</th><th>Clef</th></tr></thead>
+          <tbody id="summaryHistory"></tbody>
+        </table>
+      </div>
+      <button class="next-set-btn" onclick="startNextSet()">Next Set &rarr;</button>
+    </div>
+
+    <div class="clef-toggle">
+      <button class="clef-btn active" data-clef="treble" onclick="setClef('treble',this)">Treble</button>
+      <button class="clef-btn"        data-clef="both"   onclick="setClef('both',this)">Both</button>
+      <button class="clef-btn"        data-clef="bass"   onclick="setClef('bass',this)">Bass</button>
+    </div>
+
+    <div class="clef-badge" id="clefBadge">Treble Clef</div>
+    <div class="question-title">Which note is shown?</div>
+
+    <div class="staff-wrapper">
+      <svg id="staffSvg" width="380" height="190" style="overflow:visible"></svg>
+    </div>
+
+    <div class="controls-row">
+      <button class="hear-btn" id="hearBtn" onclick="hearCurrentNote()">
+        &#128266; Hear note
+      </button>
+      <button class="help-btn" onclick="toggleHelp()">
+        &#127358; Help
+      </button>
+      <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end">
+        <div class="mode-toggle-wrap" onclick="toggleAccidentals()" title="Accidentals: sharps and flats">
+          <span>&#9839; Sharps &amp; Flats</span>
+          <div class="toggle-track" id="accTrack">
+            <div class="toggle-thumb"></div>
+          </div>
+          <span class="mode-label" id="accLabel">Off</span>
+        </div>
+        <div class="mode-toggle-wrap" onclick="toggleMode()" title="Practice mode plays the note automatically when a new question appears">
+          <span>Auto-play</span>
+          <div class="toggle-track" id="modeTrack">
+            <div class="toggle-thumb"></div>
+          </div>
+          <span class="mode-label" id="modeLabel">Off</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="feedback hidden" id="feedback">&nbsp;</div>
+
+    <div class="piano-section">
+      <div class="piano-label">Click a key to answer</div>
+      <div class="piano-container">
+        <div class="piano" id="piano"></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ── Audio: Salamander Grand Piano samples ────────────────────────────────────
+// Run: python -m http.server 8080  (from the Note-Quiz folder)
+// Then open: http://localhost:8080/note-quiz.html
+
+const SAMPLE_BASE     = 'SalamanderGrandPiano/';
+const SAMPLE_VELOCITY = 'v8';
+
+const PIANO_SAMPLES = {
+  'C4':  SAMPLE_BASE + 'C4'      + SAMPLE_VELOCITY + '.wav',
+  'Eb4': SAMPLE_BASE + 'D%234'  + SAMPLE_VELOCITY + '.wav',
+  'Fs4': SAMPLE_BASE + 'F%234'  + SAMPLE_VELOCITY + '.wav',
+  'A4':  SAMPLE_BASE + 'A4'      + SAMPLE_VELOCITY + '.wav',
+  'C5':  SAMPLE_BASE + 'C5'      + SAMPLE_VELOCITY + '.wav',
+  'Eb5': SAMPLE_BASE + 'D%235'  + SAMPLE_VELOCITY + '.wav',
+  'Fs5': SAMPLE_BASE + 'F%235'  + SAMPLE_VELOCITY + '.wav',
+  'A5':  SAMPLE_BASE + 'A5'      + SAMPLE_VELOCITY + '.wav',
+};
+
+const SAMPLE_MIDI = {
+  'C4':60, 'Eb4':63, 'Fs4':66, 'A4':69,
+  'C5':72, 'Eb5':75, 'Fs5':78, 'A5':81
+};
+
+// Extended MIDI map: treble C4-A5 + bass E2-B3
+const NOTE_MIDI = {
+  // Bass range
+  'E2':40, 'F2':41, 'F#2':42, 'G2':43, 'G#2':44,
+  'A2':45, 'A#2':46, 'B2':47,
+  'C3':48, 'C#3':49, 'D3':50, 'D#3':51, 'E3':52,
+  'F3':53, 'F#3':54, 'G3':55, 'G#3':56, 'A3':57, 'A#3':58, 'B3':59,
+  // Treble range
+  'C4':60, 'C#4':61, 'D4':62, 'D#4':63, 'E4':64,
+  'F4':65, 'F#4':66, 'G4':67, 'G#4':68, 'A4':69, 'A#4':70, 'B4':71,
+  'C5':72, 'C#5':73, 'D5':74, 'D#5':75, 'E5':76,
+  'F5':77, 'F#5':78, 'G5':79, 'G#5':80, 'A5':81
+};
+
+let audioCtx = null;
+const decodedBuffers = {};
+let buffersReady = false;
+
+function getCtx() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  return audioCtx;
+}
+
+async function loadSamples() {
+  if (buffersReady) return;
+  const ctx = getCtx();
+  await Promise.all(Object.entries(PIANO_SAMPLES).map(async ([name, url]) => {
+    const response = await fetch(url);
+    if (!response.ok) throw new Error(`Failed to load sample ${name}: ${url}`);
+    const arrayBuffer = await response.arrayBuffer();
+    decodedBuffers[name] = await ctx.decodeAudioData(arrayBuffer);
+  }));
+  buffersReady = true;
+}
+
+function nearestSample(targetMidi) {
+  let best = null, bestDist = Infinity;
+  for (const [name, midi] of Object.entries(SAMPLE_MIDI)) {
+    const d = Math.abs(midi - targetMidi);
+    if (d < bestDist) { bestDist = d; best = name; }
+  }
+  return { name: best, rate: Math.pow(2, (targetMidi - SAMPLE_MIDI[best]) / 12) };
+}
+
+async function playNote(noteName) {
+  await loadSamples();
+  const ctx = getCtx();
+  const targetMidi = NOTE_MIDI[noteName];
+  if (targetMidi === undefined) return;
+
+  const { name: sampleName, rate } = nearestSample(targetMidi);
+  const buffer = decodedBuffers[sampleName];
+  if (!buffer) return;
+
+  const gain = ctx.createGain();
+  const t = ctx.currentTime;
+  gain.gain.setValueAtTime(0.85, t);
+  gain.gain.setValueAtTime(0.85, t + 1.3);
+  gain.gain.linearRampToValueAtTime(0, t + 2.1);
+  gain.connect(ctx.destination);
+
+  const src = ctx.createBufferSource();
+  src.buffer = buffer;
+  src.playbackRate.value = rate;
+  src.connect(gain);
+  src.start(t);
+  src.stop(t + 2.2);
+}
+
+// ── Practice / quiz mode toggle ──────────────────────────────────────────────
+let practiceMode = false;
+
+function toggleMode() {
+  practiceMode = !practiceMode;
+  document.getElementById('modeTrack').classList.toggle('on', practiceMode);
+  document.getElementById('modeLabel').textContent = practiceMode ? 'On' : 'Off';
+  if (practiceMode && currentNote) playNote(currentNote.name);
+}
+
+function hearCurrentNote() {
+  if (currentNote) playNote(currentNote.name);
+}
+
+// ── Note definitions ─────────────────────────────────────────────────────────
+// Staff lines: y=60(top), 80, 100, 120, 140(bottom). Step = 10px vertically.
+// ledgerLines: array of y values needing ledger lines for this note.
+
+const TREBLE_NOTES = [
+  { name:'C4', clef:'treble', y:160, ledgerLines:[160] },
+  { name:'D4', clef:'treble', y:150, ledgerLines:[] },
+  { name:'E4', clef:'treble', y:140, ledgerLines:[] },
+  { name:'F4', clef:'treble', y:130, ledgerLines:[] },
+  { name:'G4', clef:'treble', y:120, ledgerLines:[] },
+  { name:'A4', clef:'treble', y:110, ledgerLines:[] },
+  { name:'B4', clef:'treble', y:100, ledgerLines:[] },
+  { name:'C5', clef:'treble', y: 90, ledgerLines:[] },
+  { name:'D5', clef:'treble', y: 80, ledgerLines:[] },
+  { name:'E5', clef:'treble', y: 70, ledgerLines:[] },
+  { name:'F5', clef:'treble', y: 60, ledgerLines:[] },
+  { name:'G5', clef:'treble', y: 50, ledgerLines:[] },
+  { name:'A5', clef:'treble', y: 40, ledgerLines:[40] },
+];
+
+const TREBLE_ACCIDENTALS = [
+  { name:'C#4', clef:'treble', y:160, ledgerLines:[160], acc:'#' },
+  { name:'D#4', clef:'treble', y:150, ledgerLines:[], acc:'#' },
+  { name:'F#4', clef:'treble', y:130, ledgerLines:[], acc:'#' },
+  { name:'G#4', clef:'treble', y:120, ledgerLines:[], acc:'#' },
+  { name:'A#4', clef:'treble', y:110, ledgerLines:[], acc:'#' },
+  { name:'C#5', clef:'treble', y: 90, ledgerLines:[], acc:'#' },
+  { name:'D#5', clef:'treble', y: 80, ledgerLines:[], acc:'#' },
+  { name:'F#5', clef:'treble', y: 60, ledgerLines:[], acc:'#' },
+  { name:'G#5', clef:'treble', y: 50, ledgerLines:[], acc:'#' },
+];
+
+// Bass clef staff lines: G2(140), B2(120), D3(100), F3(80), A3(60)
+// Spaces:               A2(130), C3(110), E3(90), G3(70)
+const BASS_NOTES = [
+  { name:'E2', clef:'bass', y:160, ledgerLines:[160] },
+  { name:'F2', clef:'bass', y:150, ledgerLines:[] },
+  { name:'G2', clef:'bass', y:140, ledgerLines:[] },
+  { name:'A2', clef:'bass', y:130, ledgerLines:[] },
+  { name:'B2', clef:'bass', y:120, ledgerLines:[] },
+  { name:'C3', clef:'bass', y:110, ledgerLines:[] },
+  { name:'D3', clef:'bass', y:100, ledgerLines:[] },
+  { name:'E3', clef:'bass', y: 90, ledgerLines:[] },
+  { name:'F3', clef:'bass', y: 80, ledgerLines:[] },
+  { name:'G3', clef:'bass', y: 70, ledgerLines:[] },
+  { name:'A3', clef:'bass', y: 60, ledgerLines:[] },
+  { name:'B3', clef:'bass', y: 50, ledgerLines:[] },
+  { name:'C4', clef:'bass', y: 40, ledgerLines:[40] },
+];
+
+const BASS_ACCIDENTALS = [
+  { name:'F#2', clef:'bass', y:150, ledgerLines:[], acc:'#' },
+  { name:'G#2', clef:'bass', y:140, ledgerLines:[], acc:'#' },
+  { name:'A#2', clef:'bass', y:130, ledgerLines:[], acc:'#' },
+  { name:'C#3', clef:'bass', y:110, ledgerLines:[], acc:'#' },
+  { name:'D#3', clef:'bass', y:100, ledgerLines:[], acc:'#' },
+  { name:'F#3', clef:'bass', y: 80, ledgerLines:[], acc:'#' },
+  { name:'G#3', clef:'bass', y: 70, ledgerLines:[], acc:'#' },
+  { name:'A#3', clef:'bass', y: 60, ledgerLines:[], acc:'#' },
+];
+
+// ── Keyboard layouts ─────────────────────────────────────────────────────────
+// Treble: C4 – A5 (13 white keys)
+const TREBLE_WHITE = ['C4','D4','E4','F4','G4','A4','B4','C5','D5','E5','F5','G5','A5'];
+const TREBLE_BLACK = [
+  { name:'C#4', left: 27 }, { name:'D#4', left: 65 },
+  { name:'F#4', left:141 }, { name:'G#4', left:179 }, { name:'A#4', left:217 },
+  { name:'C#5', left:293 }, { name:'D#5', left:331 },
+  { name:'F#5', left:407 }, { name:'G#5', left:445 },
+];
+
+// Bass: E2 – C4 (13 white keys)
+// White key offsets (index * 38): E2=0, F2=38, G2=76, A2=114, B2=152,
+//   C3=190, D3=228, E3=266, F3=304, G3=342, A3=380, B3=418, C4=456
+const BASS_WHITE = ['E2','F2','G2','A2','B2','C3','D3','E3','F3','G3','A3','B3','C4'];
+const BASS_BLACK = [
+  // no E#/F black key
+  { name:'F#2', left: 65 }, { name:'G#2', left:103 }, { name:'A#2', left:141 },
+  // no B#/C black key
+  { name:'C#3', left:217 }, { name:'D#3', left:255 },
+  // no E#/F black key
+  { name:'F#3', left:331 }, { name:'G#3', left:369 }, { name:'A#3', left:407 },
+  // no B#/C black key
+];
+
+// ── State ────────────────────────────────────────────────────────────────────
+const SET_SIZE = 20;
+let setQuestion = 0;   // questions answered in current set
+let setCorrect  = 0;   // correct answers in current set
+let setHistory  = [];  // [{set, score, acc}]
+let noteStats   = {};  // {noteName: {w: wrong count}} -- cumulative across sets
+let currentSetMisses = []; // notes answered wrong this set
+
+let currentNote = null, answered = false;
+let clefMode = 'treble'; // 'treble' | 'both' | 'bass'
+let includeAccidentals = false;
+let helpOpen = false;
+
+// ── Clef toggle ──────────────────────────────────────────────────────────────
+function setClef(mode, btnEl) {
+  clefMode = mode;
+  document.querySelectorAll('.clef-btn').forEach(b => b.classList.remove('active'));
+  btnEl.classList.add('active');
+  resetSet();
+}
+
+function resetSet() {
+  setQuestion      = 0;
+  setCorrect       = 0;
+  currentSetMisses = [];
+  document.getElementById('answerLog').innerHTML = '';
+  document.getElementById('setSummary').style.display = 'none';
+  updateScore();
+  nextQuestion();
+}
+
+// ── Accidentals toggle ───────────────────────────────────────────────────────
+function toggleAccidentals() {
+  includeAccidentals = !includeAccidentals;
+  document.getElementById('accTrack').classList.toggle('on', includeAccidentals);
+  document.getElementById('accLabel').textContent = includeAccidentals ? 'On' : 'Off';
+  resetSet();
+}
+
+// ── Build piano keyboard ─────────────────────────────────────────────────────
+function buildPiano(whiteKeys, blackKeys) {
+  const pianoEl = document.getElementById('piano');
+  pianoEl.innerHTML = '';
+
+  const whitesDiv = document.createElement('div');
+  whitesDiv.style.display = 'flex';
+  whiteKeys.forEach(name => {
+    const btn = document.createElement('button');
+    btn.className = 'white-key';
+    btn.dataset.note = name;
+    btn.textContent = name[0];
+    btn.addEventListener('click', () => { playNote(name); handleAnswer(name, btn); });
+    whitesDiv.appendChild(btn);
+  });
+  pianoEl.appendChild(whitesDiv);
+
+  const blacksDiv = document.createElement('div');
+  blacksDiv.className = 'blacks';
+  blackKeys.forEach(({ name, left }) => {
+    const btn = document.createElement('button');
+    btn.className = 'black-key';
+    btn.dataset.note = name;
+    btn.style.left = left + 'px';
+    btn.textContent = name.slice(0, 2);
+    btn.addEventListener('click', () => { playNote(name); handleAnswer(name, btn); });
+    blacksDiv.appendChild(btn);
+  });
+  pianoEl.appendChild(blacksDiv);
+}
+
+// ── Staff drawing ─────────────────────────────────────────────────────────────
+// ── Staff drawing ─────────────────────────────────────────────────────────────
+function ns(tag) { return document.createElementNS('http://www.w3.org/2000/svg', tag); }
+
+const STAFF_LABELS = {
+  treble: {
+    140: { letter:'E', word:'Every'  },
+    130: { letter:'F', word:''       },
+    120: { letter:'G', word:'Good'   },
+    110: { letter:'A', word:''       },
+    100: { letter:'B', word:'Boy'    },
+     90: { letter:'C', word:''       },
+     80: { letter:'D', word:'Does'   },
+     70: { letter:'E', word:''       },
+     60: { letter:'F', word:'Fine'   },
+  },
+  bass: {
+    140: { letter:'G', word:'Grizzly'  },
+    130: { letter:'A', word:'All'      },
+    120: { letter:'B', word:'Bears'    },
+    110: { letter:'C', word:'Cows'     },
+    100: { letter:'D', word:"Don't"    },
+     90: { letter:'E', word:'Eat'      },
+     80: { letter:'F', word:'Fear'     },
+     70: { letter:'G', word:'Grass'    },
+     60: { letter:'A', word:'Anything' },
+  }
+};
+const LINE_YS = new Set([60, 80, 100, 120, 140]);
+
+function drawStaff(note) {
+  const svg = document.getElementById('staffSvg');
+  svg.innerHTML = '';
+
+  const lineX2 = helpOpen ? '238' : '360';
+
+  // Five staff lines
+  for (let i = 0; i < 5; i++) {
+    const y = 60 + i * 20;
+    const ln = ns('line');
+    ln.setAttribute('x1','20'); ln.setAttribute('x2', lineX2);
+    ln.setAttribute('y1', y);  ln.setAttribute('y2', y);
+    ln.setAttribute('stroke','#c8d0dd'); ln.setAttribute('stroke-width','1.6');
+    svg.appendChild(ln);
+  }
+
+  // Clef symbol
+  const clef = ns('text');
+  clef.setAttribute('font-family','serif');
+  clef.setAttribute('fill','#334155');
+  if (note.clef === 'bass') {
+    clef.setAttribute('x','22'); clef.setAttribute('y','108');
+    clef.setAttribute('font-size','68');
+    clef.textContent = '𝄢';
+  } else {
+    clef.setAttribute('x','30'); clef.setAttribute('y','132');
+    clef.setAttribute('font-size','96');
+    clef.textContent = '𝄞';
+  }
+  svg.appendChild(clef);
+
+  // Help labels: note badge + mnemonic word beside every line and space
+  if (helpOpen) {
+    const labels = STAFF_LABELS[note.clef];
+    const isBass = note.clef === 'bass';
+    const LINE_X = 248;   // lines column
+    const SPACE_X = 326;  // spaces column
+
+    const div = ns('line');
+    div.setAttribute('x1','242'); div.setAttribute('x2','242');
+    div.setAttribute('y1','52');  div.setAttribute('y2','148');
+    div.setAttribute('stroke','#e2e8f0'); div.setAttribute('stroke-width','1');
+    svg.appendChild(div);
+
+    Object.entries(labels).forEach(([yStr, info]) => {
+      const y = parseInt(yStr);
+      const onLine = LINE_YS.has(y);
+      const LX = onLine ? LINE_X : SPACE_X;
+      const circleFill  = onLine ? (isBass ? '#fef3c7' : '#ede9fe') : (isBass ? '#fee2e2' : '#d1fae5');
+      const letterColor = onLine ? (isBass ? '#78350f' : '#4c1d95') : (isBass ? '#7f1d1d' : '#064e3b');
+
+      const circle = ns('circle');
+      circle.setAttribute('cx', LX + 11); circle.setAttribute('cy', y); circle.setAttribute('r','10');
+      circle.setAttribute('fill', circleFill);
+      svg.appendChild(circle);
+
+      const lText = ns('text');
+      lText.setAttribute('x', LX + 11); lText.setAttribute('y', y + 4);
+      lText.setAttribute('text-anchor','middle');
+      lText.setAttribute('font-size','11'); lText.setAttribute('font-weight','800');
+      lText.setAttribute('font-family','system-ui,sans-serif');
+      lText.setAttribute('fill', letterColor);
+      lText.textContent = info.letter;
+      svg.appendChild(lText);
+
+      if (info.word) {
+        const wText = ns('text');
+        wText.setAttribute('x', LX + 25); wText.setAttribute('y', y + 4);
+        wText.setAttribute('font-size','10'); wText.setAttribute('font-weight','600');
+        wText.setAttribute('font-family','system-ui,sans-serif');
+        wText.setAttribute('fill','#94a3b8');
+        wText.textContent = info.word;
+        svg.appendChild(wText);
+      }
+    });
+  }
+
+  // Ledger lines
+  note.ledgerLines.forEach(ly => {
+    const l = ns('line');
+    l.setAttribute('x1','178'); l.setAttribute('x2','222');
+    l.setAttribute('y1', ly);  l.setAttribute('y2', ly);
+    l.setAttribute('stroke','#475569'); l.setAttribute('stroke-width','1.8');
+    svg.appendChild(l);
+  });
+
+  // Accidental symbol (sharp)
+  if (note.acc === '#') {
+    const sharp = ns('text');
+    sharp.setAttribute('x','173'); sharp.setAttribute('y', note.y + 6);
+    sharp.setAttribute('font-size','22'); sharp.setAttribute('font-family','serif');
+    sharp.setAttribute('font-weight','bold'); sharp.setAttribute('fill','#1e293b');
+    sharp.textContent = '♯';
+    svg.appendChild(sharp);
+  }
+
+  // Note head
+  const head = ns('ellipse');
+  head.setAttribute('cx','200'); head.setAttribute('cy', note.y);
+  head.setAttribute('rx','12'); head.setAttribute('ry','8');
+  head.setAttribute('fill','#1e293b');
+  head.setAttribute('transform', 'rotate(-18, 200, ' + note.y + ')');
+  svg.appendChild(head);
+
+  // Stem
+  const stemUp = note.y >= 100;
+  const sx  = stemUp ? 212 : 188;
+  const sy2 = stemUp ? note.y - 55 : note.y + 55;
+  const stem = ns('line');
+  stem.setAttribute('x1', sx); stem.setAttribute('x2', sx);
+  stem.setAttribute('y1', note.y); stem.setAttribute('y2', sy2);
+  stem.setAttribute('stroke','#1e293b'); stem.setAttribute('stroke-width','2.2');
+  svg.appendChild(stem);
+}
+
+// ── Game logic ────────────────────────────────────────────────────────────────
+function getPool() {
+  let natural, accs;
+  if (clefMode === 'treble')     { natural = TREBLE_NOTES; accs = TREBLE_ACCIDENTALS; }
+  else if (clefMode === 'bass')  { natural = BASS_NOTES;   accs = BASS_ACCIDENTALS;   }
+  else                           { natural = [...TREBLE_NOTES, ...BASS_NOTES];
+                                   accs    = [...TREBLE_ACCIDENTALS, ...BASS_ACCIDENTALS]; }
+  return includeAccidentals ? [...natural, ...accs] : natural;
+}
+
+function nextQuestion() {
+  answered = false;
+  const fb = document.getElementById('feedback');
+  fb.className = 'feedback hidden';
+  fb.textContent = '\u00a0';
+  document.querySelectorAll('.white-key, .black-key').forEach(k => {
+    k.classList.remove('correct-flash', 'wrong-flash');
+  });
+
+  const pool = getPool();
+  let idx;
+  do { idx = Math.floor(Math.random() * pool.length); }
+  while (pool[idx] === currentNote && pool.length > 1);
+  currentNote = pool[idx];
+
+  // Update clef badge
+  document.getElementById('clefBadge').textContent =
+    currentNote.clef === 'bass' ? 'Bass Clef' : 'Treble Clef';
+
+  // Rebuild keyboard to match current note's clef
+  if (currentNote.clef === 'bass') {
+    buildPiano(BASS_WHITE, BASS_BLACK);
+  } else {
+    buildPiano(TREBLE_WHITE, TREBLE_BLACK);
+  }
+
+  drawStaff(currentNote);
+
+  if (practiceMode) setTimeout(() => playNote(currentNote.name), 150);
+}
+
+function handleAnswer(noteName, btn) {
+  if (answered) return;
+  answered = true;
+  setQuestion++;
+
+  const isCorrect = noteName === currentNote.name;
+
+  if (isCorrect) {
+    setCorrect++;
+    btn.classList.add('correct-flash');
+    showFeedback('\u2713 Correct!', 'correct');
+  } else {
+    btn.classList.add('wrong-flash');
+    document.querySelectorAll('.white-key, .black-key').forEach(k => {
+      if (k.dataset.note === currentNote.name) k.classList.add('correct-flash');
+    });
+    setTimeout(() => playNote(currentNote.name), 350);
+    showFeedback('\u2717 ' + noteName.replace(/\d/, '') + ' \u2014 it was ' + currentNote.name, 'wrong');
+    // Track miss
+    const n = currentNote.name;
+    if (!noteStats[n]) noteStats[n] = { w: 0 };
+    noteStats[n].w++;
+    if (!currentSetMisses.includes(n)) currentSetMisses.push(n);
+  }
+
+  updateScore();
+  logAnswer(currentNote.name, isCorrect);
+
+  if (setQuestion >= SET_SIZE) {
+    setTimeout(endOfSet, 1700);
+  } else {
+    setTimeout(nextQuestion, 1700);
+  }
+}
+
+function showFeedback(msg, type) {
+  const el = document.getElementById('feedback');
+  el.textContent = msg;
+  el.className = 'feedback ' + type;
+}
+
+function updateScore() {
+  document.getElementById('scoreQuestion').textContent = setQuestion + ' / ' + SET_SIZE;
+  document.getElementById('scoreCorrect').textContent  = setCorrect;
+  const pct = setQuestion ? Math.round(setCorrect / setQuestion * 100) : 0;
+  document.getElementById('scoreAcc').textContent      = setQuestion ? pct + '%' : '--';
+  document.getElementById('progressBar').style.width   = (setQuestion / SET_SIZE * 100) + '%';
+}
+
+function endOfSet() {
+  const pct = Math.round(setCorrect / SET_SIZE * 100);
+  const clefLabel = clefMode === 'treble' ? 'Treble' : clefMode === 'bass' ? 'Bass' : 'Both';
+  setHistory.push({ set: setHistory.length + 1, score: setCorrect, acc: pct, clef: clefLabel });
+
+  // Summary score
+  document.getElementById('summaryScore').textContent = setCorrect;
+  document.getElementById('summaryAcc').textContent   = pct + '%';
+
+  // Notes to review (this set's misses, sorted by total wrong count)
+  const missesEl = document.getElementById('summaryMisses');
+  missesEl.innerHTML = '';
+  if (currentSetMisses.length === 0) {
+    missesEl.innerHTML = '<span class="no-misses">\u2713 Perfect set!</span>';
+  } else {
+    const sorted = [...currentSetMisses].sort((a, b) => (noteStats[b]?.w || 0) - (noteStats[a]?.w || 0));
+    sorted.forEach(n => {
+      const chip = document.createElement('span');
+      chip.className = 'miss-chip';
+      chip.textContent = n + ' \u00d7' + (noteStats[n]?.w || 1);
+      missesEl.appendChild(chip);
+    });
+  }
+
+  // Set history table (most recent first, max 8 rows)
+  const tbody = document.getElementById('summaryHistory');
+  tbody.innerHTML = '';
+  const recent = [...setHistory].reverse().slice(0, 8);
+  recent.forEach((h, i) => {
+    const tr = document.createElement('tr');
+    if (i === 0) tr.className = 'current-row';
+    tr.innerHTML = '<td>' + h.set + '</td><td>' + h.score + ' / ' + SET_SIZE + '</td><td class="acc-cell">' + h.acc + '%</td><td>' + h.clef + '</td>';
+    tbody.appendChild(tr);
+  });
+
+  document.getElementById('setSummary').style.display = 'flex';
+}
+
+function startNextSet() {
+  setQuestion     = 0;
+  setCorrect      = 0;
+  currentSetMisses = [];
+  document.getElementById('setSummary').style.display = 'none';
+  document.getElementById('answerLog').innerHTML = '';
+  updateScore();
+  nextQuestion();
+}
+
+function logAnswer(noteName, isCorrect) {
+  const log = document.getElementById('answerLog');
+  const item = document.createElement('div');
+  item.className = 'answer-item ' + (isCorrect ? 'c' : 'w');
+  item.innerHTML = '<span>' + noteName + '</span><span>' + (isCorrect ? '\u2713' : '\u2717') + '</span>';
+  log.insertBefore(item, log.firstChild);
+  if (log.children.length > SET_SIZE) log.removeChild(log.lastChild);
+}
+
+updateScore();
+nextQuestion();
+
+// ── Help toggle — redraws staff with inline note labels ──────────────────────
+function toggleHelp() {
+  helpOpen = !helpOpen;
+  document.querySelector('.help-btn').classList.toggle('active', helpOpen);
+  if (currentNote) drawStaff(currentNote);
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && helpOpen) toggleHelp();
+});
+</script>
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => navigator.serviceWorker.register('sw.js'));
+}
+</script>
+</body>
+</html>
