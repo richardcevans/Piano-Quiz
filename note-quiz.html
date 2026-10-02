@@ -703,13 +703,13 @@ const STAFF_LABELS = {
   },
   bass: {
     140: { letter:'G', word:'Grizzly'  },
-    130: { letter:'A', word:''         },
+    130: { letter:'A', word:'All'      },
     120: { letter:'B', word:'Bears'    },
-    110: { letter:'C', word:''         },
+    110: { letter:'C', word:'Cows'     },
     100: { letter:'D', word:"Don't"    },
-     90: { letter:'E', word:''         },
+     90: { letter:'E', word:'Eat'      },
      80: { letter:'F', word:'Fear'     },
-     70: { letter:'G', word:''         },
+     70: { letter:'G', word:'Grass'    },
      60: { letter:'A', word:'Anything' },
   }
 };
@@ -750,7 +750,8 @@ function drawStaff(note) {
   if (helpOpen) {
     const labels = STAFF_LABELS[note.clef];
     const isBass = note.clef === 'bass';
-    const LX = 248;
+    const LINE_X = 248;   // lines column
+    const SPACE_X = 326;  // spaces column
 
     const div = ns('line');
     div.setAttribute('x1','242'); div.setAttribute('x2','242');
@@ -761,6 +762,7 @@ function drawStaff(note) {
     Object.entries(labels).forEach(([yStr, info]) => {
       const y = parseInt(yStr);
       const onLine = LINE_YS.has(y);
+      const LX = onLine ? LINE_X : SPACE_X;
       const circleFill  = onLine ? (isBass ? '#fef3c7' : '#ede9fe') : (isBass ? '#fee2e2' : '#d1fae5');
       const letterColor = onLine ? (isBass ? '#78350f' : '#4c1d95') : (isBass ? '#7f1d1d' : '#064e3b');
 
