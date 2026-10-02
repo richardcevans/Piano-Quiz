@@ -1,6 +1,6 @@
 // Piano Quiz service worker: caches everything so the app works offline.
 // Bump CACHE when you change the app so phones pick up the new version.
-const CACHE = 'piano-quiz-v2';
+const CACHE = 'piano-quiz-v3';
 const SAMPLES = ['C4v8','D%234v8','F%234v8','A4v8','C5v8','D%235v8','F%235v8','A5v8']
   .map(n => 'SalamanderGrandPiano/' + n + '.wav');
 const ASSETS = ['./', 'index.html', 'manifest.json', 'icon-192.png', 'icon-512.png', ...SAMPLES];
