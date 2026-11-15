@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Note Quiz</title>
+<title>Piano Quiz</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -316,6 +316,89 @@
   .help-btn.active { background: #5b21b6; color: white; border-color: #5b21b6; }
 
 
+  /* ── Mode tabs, streak, chord builder ── */
+  .streak { font-size: 0.78rem; font-weight: 800; color: #b45309; margin-bottom: 12px; min-height: 1.1em; }
+  .mode-tabs { display: flex; gap: 6px; margin-bottom: 12px; flex-wrap: wrap; }
+  .mode-tab {
+    flex: 1; min-width: 0; padding: 8px 10px; font-size: 0.74rem; font-weight: 800;
+    border: 1.5px solid #ded6f7; border-radius: 99px; background: white; color: #6d28d9;
+    cursor: pointer; white-space: nowrap; transition: all 0.15s;
+  }
+  .mode-tab:hover { background: #f5f3ff; border-color: #c4b5fd; }
+  .mode-tab.active { background: #1e1b4b; color: white; border-color: #1e1b4b; }
+  .mode-tab.ghost { flex: 0 0 auto; color: #64748b; }
+
+  .chord-prompt { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .chord-symbol { font-size: 0.9rem; font-weight: 900; color: #6d28d9; background: #ede9fe; border-radius: 99px; padding: 2px 12px; }
+  .chord-slots { display: flex; align-items: center; gap: 4px; margin: 12px 0 6px; flex-wrap: wrap; }
+  .slot {
+    min-width: 68px; text-align: center; background: #fbfcff;
+    border: 1.5px dashed #c4b5fd; border-radius: 0.9rem; padding: 6px 10px;
+  }
+  .slot.filled { border-style: solid; background: #f5f3ff; }
+  .slot-deg { font-size: 0.55rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.14em; color: #94a3b8; }
+  .slot-note { font-size: 1.3rem; font-weight: 900; color: #1e1b4b; min-height: 1.5em; }
+  .slot-gap { font-size: 0.78rem; font-weight: 900; color: #6d28d9; visibility: hidden; }
+  .slot-gap.show { visibility: visible; }
+  .chord-tip {
+    font-size: 0.78rem; font-weight: 600; color: #475569; background: #f5f3ff;
+    border-radius: 0.8rem; padding: 8px 12px; margin-bottom: 8px; line-height: 1.35;
+  }
+  .chord-mine { font-size: 0.8rem; font-weight: 700; color: #475569; min-height: 1.3em; margin-bottom: 8px; }
+  .chord-types { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 12px; }
+  .type-chip {
+    padding: 5px 12px; font-size: 0.7rem; font-weight: 800; border: 1.5px solid #ded6f7;
+    border-radius: 99px; background: white; color: #94a3b8; cursor: pointer; transition: all 0.15s;
+  }
+  .type-chip:hover { background: #f5f3ff; color: #5b21b6; border-color: #c4b5fd; }
+  .type-chip.active { background: #5b21b6; color: white; border-color: #5b21b6; }
+  .chord-actions { display: flex; gap: 8px; margin-top: 12px; }
+  .act-btn {
+    flex: 1; padding: 11px 12px; font-size: 0.85rem; font-weight: 800; cursor: pointer;
+    border: 1.5px solid #c4b5fd; border-radius: 99px; background: #f5f3ff; color: #5b21b6;
+    transition: background 0.15s, transform 0.1s;
+  }
+  .act-btn:hover { background: #ede9fe; }
+  .act-btn:active { transform: scale(0.97); }
+  .act-btn:disabled { opacity: 0.45; cursor: default; transform: none; }
+  .act-btn.primary { background: #5b21b6; color: white; border-color: #5b21b6; flex: 1.4; }
+  .act-btn.primary:hover { background: #4c1d95; }
+  .white-key.selected { background: #ddd6fe !important; box-shadow: inset 0 -8px 0 #6d28d9; }
+  .black-key.selected { background: #6d28d9 !important; }
+  .black-key.two { font-size: 0.56rem; line-height: 1.15; letter-spacing: 0; padding-bottom: 5px; text-align: center; }
+
+  .weak-list { width: 100%; display: flex; flex-direction: column; gap: 6px; }
+  .weak-row { display: grid; grid-template-columns: 70px 1fr 92px; align-items: center; gap: 10px; font-size: 0.8rem; font-weight: 800; color: #334155; }
+  .weak-bar { height: 8px; background: #fee2e2; border-radius: 99px; overflow: hidden; }
+  .weak-bar i { display: block; height: 8px; background: #10b981; border-radius: 99px; }
+  .weak-pct { font-size: 0.72rem; color: #64748b; text-align: right; }
+  .weak-empty { font-size: 0.85rem; font-weight: 700; color: #64748b; text-align: center; }
+  .link-btn { background: none; border: none; color: #94a3b8; font-size: 0.72rem; font-weight: 700; cursor: pointer; text-decoration: underline; }
+  @media (max-width: 640px) {
+    .slot { min-width: 56px; padding: 5px 6px; }
+    .mode-tab { font-size: 0.68rem; padding: 8px 6px; }
+  }
+
+  /* ── Circle of fifths ── */
+  .answer-grid { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+  .ans-btn {
+    flex: 1 0 58px; padding: 10px 6px; font-size: 0.9rem; font-weight: 900; cursor: pointer;
+    border: 1.5px solid #ded6f7; border-radius: 0.9rem; background: white; color: #1e1b4b;
+    transition: background 0.1s, transform 0.1s;
+  }
+  .ans-btn:hover { background: #f5f3ff; border-color: #c4b5fd; }
+  .ans-btn:active { transform: scale(0.96); }
+  .ans-btn.good { background: #bbf7d0; border-color: #10b981; }
+  .ans-btn.bad  { background: #fecaca; border-color: #ef4444; }
+  .sheet-note { width: 100%; font-size: 0.8rem; font-weight: 600; color: #334155; line-height: 1.45; }
+  .sheet-note b { color: #5b21b6; }
+
+  /* ── Progressions ── */
+  .slot.current { border-style: solid; border-color: #6d28d9; background: #f5f3ff; }
+  .slot.ok  { border-style: solid; border-color: #10b981; background: #ecfdf5; }
+  .slot.bad { border-style: solid; border-color: #ef4444; background: #fef2f2; }
+  .slot-deg.roman { font-size: 0.8rem; letter-spacing: 0; text-transform: none; color: #5b21b6; font-weight: 900; }
+
   /* ── Phone layout ── */
   button { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
   @media (max-width: 640px) {
@@ -345,8 +428,9 @@
 </head>
 <body>
 
-<h1>&#127925; Note Quiz</h1>
-<p class="subtitle">No timer. No pressure. Just read.</p>
+<h1>&#127925; Piano Quiz</h1>
+<p class="subtitle">No timer. No pressure. Just learn.</p>
+<div class="streak" id="streakBadge"></div>
 
 <div class="layout">
 
@@ -381,41 +465,102 @@
     <div class="set-summary" id="setSummary" style="display:none">
       <div class="summary-score-wrap">
         <div class="summary-score-num" id="summaryScore">0</div>
-        <div class="summary-score-den">out of 20</div>
+        <div class="summary-score-den" id="summaryDen">out of 20</div>
       </div>
       <div class="summary-acc" id="summaryAcc">--%</div>
       <div class="summary-section">
-        <div class="summary-section-label">Notes to review</div>
+        <div class="summary-section-label" id="missLabel">Notes to review</div>
         <div class="miss-chips" id="summaryMisses"></div>
       </div>
       <div class="summary-section">
         <div class="summary-section-label">Set history</div>
         <table class="history-table">
-          <thead><tr><th>Set</th><th>Score</th><th>Accuracy</th><th>Clef</th></tr></thead>
+          <thead><tr><th>Set</th><th>Score</th><th>Accuracy</th><th>Mode</th></tr></thead>
           <tbody id="summaryHistory"></tbody>
         </table>
       </div>
       <button class="next-set-btn" onclick="startNextSet()">Next Set &rarr;</button>
     </div>
 
-    <div class="clef-toggle">
+    <!-- Circle cheat sheet overlay -->
+    <div class="set-summary" id="sheetPanel" style="display:none">
+      <div class="summary-section-label">Circle of fifths cheat sheet</div>
+      <svg id="sheetSvg" viewBox="0 0 300 300" style="width:100%;max-width:280px;height:auto;flex-shrink:0"></svg>
+      <div class="sheet-note">
+        <b>Clockwise</b> goes up a fifth and adds a sharp. <b>Counter-clockwise</b> goes up a fourth and adds a flat. The <b>inner ring</b> is the relative minor, with the same key signature.<br><br>
+        <b>Sharps are added in this order:</b> F C G D A E B (Father Charles Goes Down And Ends Battle). The key is one half step above the last sharp.<br><br>
+        <b>Flats are added in the reverse order:</b> B E A D G C F (Battle Ends And Down Goes Charles's Father). The key is the second-to-last flat. F is the one exception, with just B&#9837;.
+      </div>
+      <button class="next-set-btn" onclick="closeSheet()">Back to practice</button>
+    </div>
+
+    <!-- Weak spots overlay -->
+    <div class="set-summary" id="weakPanel" style="display:none">
+      <div class="summary-section-label" id="weakTitle">Weak spots</div>
+      <div class="weak-list" id="weakList"></div>
+      <button class="next-set-btn" onclick="closeWeak()">Back to practice</button>
+      <button class="link-btn" onclick="resetStats()">Reset my stats</button>
+    </div>
+
+    <div class="mode-tabs">
+      <button class="mode-tab active" id="tabNotes" onclick="setAppMode('notes')">&#127932; Read notes</button>
+      <button class="mode-tab" id="tabChords" onclick="setAppMode('chords')">&#127929; Build chords</button>
+      <button class="mode-tab" id="tabCircle" onclick="setAppMode('circle')">&#128260; Circle &amp; keys</button>
+      <button class="mode-tab" id="tabProg" onclick="setAppMode('prog')">&#127926; Progressions</button>
+      <button class="mode-tab ghost" onclick="openWeak()">&#128202; Weak spots</button>
+    </div>
+
+    <div class="clef-toggle" id="clefToggle">
       <button class="clef-btn active" data-clef="treble" onclick="setClef('treble',this)">Treble</button>
       <button class="clef-btn"        data-clef="both"   onclick="setClef('both',this)">Both</button>
       <button class="clef-btn"        data-clef="bass"   onclick="setClef('bass',this)">Bass</button>
     </div>
 
     <div class="clef-badge" id="clefBadge">Treble Clef</div>
-    <div class="question-title">Which note is shown?</div>
+    <div class="question-title" id="questionTitle">Which note is shown?</div>
 
-    <div class="staff-wrapper">
+    <div class="staff-wrapper" id="staffWrap">
       <svg id="staffSvg" viewBox="0 0 400 190" style="width:100%;max-width:400px;height:auto;overflow:visible"></svg>
+    </div>
+
+    <div id="chordPanel" style="display:none">
+      <div class="clef-badge" id="chordBadge">Triad</div>
+      <div class="chord-prompt">
+        <span class="question-title" id="chordPrompt" style="margin-bottom:0">Build C major</span>
+        <span class="chord-symbol" id="chordSymbol">C</span>
+      </div>
+      <div class="chord-slots" id="chordSlots"></div>
+      <div class="chord-tip" id="chordTip" style="display:none"></div>
+      <div class="chord-mine" id="chordMine">Your notes: none yet</div>
+      <div class="chord-types" id="chordTypes"></div>
+    </div>
+
+    <div id="progPanel" style="display:none">
+      <div class="clef-badge" id="progBadge">Chord progression</div>
+      <div class="question-title" id="progPrompt">Play I IV V in G major</div>
+      <div class="chord-slots" id="progSlots"></div>
+      <div class="chord-tip" id="progTip" style="display:none"></div>
+      <div class="chord-mine" id="progMine">Your notes: none yet</div>
+      <div class="chord-types" id="progTypes"></div>
+    </div>
+
+    <div id="circlePanel" style="display:none">
+      <div class="clef-badge" id="circleBadge">Fifth above</div>
+      <div class="question-title" id="circlePrompt">What is a fifth above G?</div>
+      <div class="staff-wrapper">
+        <svg id="circleSvg" viewBox="0 0 300 300" style="width:100%;max-width:300px;height:auto"></svg>
+      </div>
+      <div class="chord-tip" id="circleTip" style="display:none"></div>
+      <div class="chord-types" id="circleTypes"></div>
+      <div class="answer-grid" id="circleAnswers" style="display:none"></div>
+      <button class="link-btn" style="margin-bottom:12px" onclick="openSheet()">Open the cheat sheet</button>
     </div>
 
     <div class="controls-row">
       <button class="hear-btn" id="hearBtn" onclick="hearCurrentNote()">
         &#128266; Hear note
       </button>
-      <button class="help-btn" onclick="toggleHelp()">
+      <button class="help-btn" id="helpBtn" onclick="toggleHelp()">
         &#127358; Help
       </button>
       <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end">
@@ -426,7 +571,7 @@
           </div>
           <span class="mode-label" id="accLabel">Off</span>
         </div>
-        <div class="mode-toggle-wrap" onclick="toggleMode()" title="Practice mode plays the note automatically when a new question appears">
+        <div class="mode-toggle-wrap" id="autoWrap" onclick="toggleMode()" title="Practice mode plays the note automatically when a new question appears">
           <span>Auto-play</span>
           <div class="toggle-track" id="modeTrack">
             <div class="toggle-thumb"></div>
@@ -439,10 +584,15 @@
     <div class="feedback hidden" id="feedback">&nbsp;</div>
 
     <div class="piano-section">
-      <div class="piano-label">Click a key to answer</div>
+      <div class="piano-label" id="pianoLabel">Click a key to answer</div>
       <div class="piano-container">
         <div class="piano" id="piano"></div>
       </div>
+    </div>
+    <div class="chord-actions" id="chordActions" style="display:none">
+      <button class="act-btn" id="hintBtn" onclick="hintChord()">Hint</button>
+      <button class="act-btn" id="clearBtn" onclick="clearChord()">Clear</button>
+      <button class="act-btn primary" id="chordPrimary" onclick="chordPrimary()" disabled>Check</button>
     </div>
   </div>
 
@@ -485,6 +635,15 @@ const NOTE_MIDI = {
   'C5':72, 'C#5':73, 'D5':74, 'D#5':75, 'E5':76,
   'F5':77, 'F#5':78, 'G5':79, 'G#5':80, 'A5':81
 };
+
+// Fill in every note from C2 to C7 so chord mode can reach higher keys
+(function () {
+  const n = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+  for (let m = 36; m <= 96; m++) {
+    const k = n[m % 12] + (Math.floor(m / 12) - 1);
+    if (!(k in NOTE_MIDI)) NOTE_MIDI[k] = m;
+  }
+})();
 
 let audioCtx = null;
 const decodedBuffers = {};
@@ -642,7 +801,7 @@ const BASS_BLACK = [
 ];
 
 // ── State ────────────────────────────────────────────────────────────────────
-const SET_SIZE = 20;
+let SET_SIZE = 20;
 let setQuestion = 0;   // questions answered in current set
 let setCorrect  = 0;   // correct answers in current set
 let setHistory  = [];  // [{set, score, acc}]
@@ -663,6 +822,8 @@ function setClef(mode, btnEl) {
 }
 
 function resetSet() {
+  clearTimeout(advanceTimer);
+  awaitingNext = false;
   setQuestion      = 0;
   setCorrect       = 0;
   currentSetMisses = [];
@@ -882,6 +1043,9 @@ function getPool() {
 }
 
 function nextQuestion() {
+  if (appMode === 'chords') { nextChord(); return; }
+  if (appMode === 'circle') { nextCircle(); return; }
+  if (appMode === 'prog') { nextProg(); return; }
   answered = false;
   const fb = document.getElementById('feedback');
   fb.className = 'feedback hidden';
@@ -891,10 +1055,7 @@ function nextQuestion() {
   });
 
   const pool = getPool();
-  let idx;
-  do { idx = Math.floor(Math.random() * pool.length); }
-  while (pool[idx] === currentNote && pool.length > 1);
-  currentNote = pool[idx];
+  currentNote = pickWeighted(pool, noteKey, currentNote ? noteKey(currentNote) : null);
 
   // Update clef badge
   document.getElementById('clefBadge').textContent =
@@ -937,13 +1098,14 @@ function handleAnswer(noteName, btn) {
     if (!currentSetMisses.includes(n)) currentSetMisses.push(n);
   }
 
+  recordResult(noteKey(currentNote), isCorrect);
   updateScore();
   logAnswer(currentNote.name, isCorrect);
 
   if (setQuestion >= SET_SIZE) {
-    setTimeout(endOfSet, 1700);
+    schedule(endOfSet, 1700);
   } else {
-    setTimeout(nextQuestion, 1700);
+    schedule(nextQuestion, 1700);
   }
 }
 
@@ -963,7 +1125,10 @@ function updateScore() {
 
 function endOfSet() {
   const pct = Math.round(setCorrect / SET_SIZE * 100);
-  const clefLabel = clefMode === 'treble' ? 'Treble' : clefMode === 'bass' ? 'Bass' : 'Both';
+  const clefLabel = appMode === 'prog' ? 'Progressions' : appMode === 'circle' ? 'Circle' : appMode === 'chords' ? 'Chords'
+                  : clefMode === 'treble' ? 'Treble' : clefMode === 'bass' ? 'Bass' : 'Both';
+  document.getElementById('summaryDen').textContent = 'out of ' + SET_SIZE;
+  document.getElementById('missLabel').textContent = appMode === 'chords' ? 'Chords to review' : appMode === 'circle' ? 'Keys to review' : appMode === 'prog' ? 'Progressions to review' : 'Notes to review';
   setHistory.push({ set: setHistory.length + 1, score: setCorrect, acc: pct, clef: clefLabel });
 
   // Summary score
@@ -1000,6 +1165,8 @@ function endOfSet() {
 }
 
 function startNextSet() {
+  clearTimeout(advanceTimer);
+  awaitingNext = false;
   setQuestion     = 0;
   setCorrect      = 0;
   currentSetMisses = [];
@@ -1018,6 +1185,932 @@ function logAnswer(noteName, isCorrect) {
   if (log.children.length > SET_SIZE) log.removeChild(log.lastChild);
 }
 
+// ══ Progress store: weak spots + daily streak ═══════════════════════════════
+const STORE_KEY = 'pianoQuiz.v1';
+let store = { items: {}, days: [] };
+
+function loadStore() {
+  try {
+    const s = JSON.parse(localStorage.getItem(STORE_KEY) || 'null');
+    if (s && s.items) store = { items: s.items, days: s.days || [] };
+  } catch (e) {}
+}
+function saveStore() { try { localStorage.setItem(STORE_KEY, JSON.stringify(store)); } catch (e) {} }
+
+function todayStr(d) {
+  d = d || new Date();
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+function markToday() {
+  const t = todayStr();
+  if (store.days[store.days.length - 1] !== t) {
+    store.days.push(t);
+    if (store.days.length > 400) store.days.shift();
+  }
+}
+function streakDays() {
+  const set = new Set(store.days);
+  const d = new Date();
+  let n = 0;
+  if (!set.has(todayStr(d))) d.setDate(d.getDate() - 1);
+  while (set.has(todayStr(d))) { n++; d.setDate(d.getDate() - 1); }
+  return n;
+}
+function renderStreak() {
+  const n = streakDays();
+  document.getElementById('streakBadge').textContent =
+    n > 0 ? '🔥 ' + n + '-day streak' : 'Answer a question to start your streak';
+}
+
+function recordResult(key, ok) {
+  const it = store.items[key] || (store.items[key] = { seen: 0, wrong: 0, streak: 0 });
+  it.seen++;
+  if (ok) it.streak++; else { it.wrong++; it.streak = 0; }
+  markToday();
+  saveStore();
+  renderStreak();
+}
+
+// Items you miss show up more often; items you keep getting right fade out.
+function weightOf(key) {
+  const it = store.items[key];
+  if (!it || it.seen === 0) return 2;
+  const err = (it.wrong + 0.3) / (it.seen + 1);
+  return Math.max(0.15, (0.4 + 4 * err) * Math.pow(0.75, Math.min(it.streak, 6)));
+}
+function pickWeighted(items, keyFn, avoidKey) {
+  const pool = items.length > 1 ? items.filter(i => keyFn(i) !== avoidKey) : items;
+  const w = pool.map(i => weightOf(keyFn(i)));
+  let r = Math.random() * w.reduce((a, b) => a + b, 0);
+  for (let i = 0; i < pool.length; i++) { r -= w[i]; if (r <= 0) return pool[i]; }
+  return pool[pool.length - 1];
+}
+function noteKey(n) { return 'note:' + n.clef + ':' + n.name; }
+
+// ══ Chord theory ═════════════════════════════════════════════════════════════
+const LETTERS = ['C','D','E','F','G','A','B'];
+const NAT_PC = { C:0, D:2, E:4, F:5, G:7, A:9, B:11 };
+const SHARP_NAMES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+const FLAT_NAMES  = ['C','Db','D','Eb','E','F','Gb','G','Ab','A','Bb','B'];
+const DEG_LABEL = { 1:'Root', 3:'3rd', 4:'4th', 5:'5th', 7:'7th' };
+const ROOTS_NAT = ['C','D','E','F','G','A','B'];
+const ROOTS_ACC = ['Db','Eb','F#','Ab','Bb'];
+
+const CHORD_TYPES = {
+  maj:  { chip:'Major', full:'major',          sym:'',     iv:[0,4,7],     degs:[1,3,5],
+          tip:'Major: the 3rd is 4 half steps up (bright). The 5th is 7 half steps above the root.' },
+  min:  { chip:'Minor', full:'minor',          sym:'m',    iv:[0,3,7],     degs:[1,3,5],
+          tip:'Minor: the 3rd drops to 3 half steps (darker). The 5th is still 7 half steps above the root.' },
+  dim:  { chip:'Dim',   full:'diminished',     sym:'dim',  iv:[0,3,6],     degs:[1,3,5],
+          tip:'Diminished: two minor 3rds stacked, so the 5th gets squeezed down to 6 half steps.' },
+  aug:  { chip:'Aug',   full:'augmented',      sym:'aug',  iv:[0,4,8],     degs:[1,3,5],
+          tip:'Augmented: two major 3rds stacked, so the 5th gets stretched up to 8 half steps.' },
+  sus4: { chip:'Sus4',  full:'suspended 4th',  sym:'sus4', iv:[0,5,7],     degs:[1,4,5],
+          tip:'Sus4: the 3rd is swapped for a 4th, 5 half steps up. The 5th stays at 7.' },
+  dom7: { chip:'7',     full:'dominant 7th',   sym:'7',    iv:[0,4,7,10],  degs:[1,3,5,7],
+          tip:'Dominant 7: a major triad plus a 7th that sits 10 half steps above the root.' },
+  maj7: { chip:'Maj7',  full:'major 7th',      sym:'maj7', iv:[0,4,7,11],  degs:[1,3,5,7],
+          tip:'Major 7: a major triad plus a 7th 11 half steps up, one key below the next root.' },
+  min7: { chip:'m7',    full:'minor 7th',      sym:'m7',   iv:[0,3,7,10],  degs:[1,3,5,7],
+          tip:'Minor 7: a minor triad plus a 7th that sits 10 half steps above the root.' },
+};
+let enabledTypes = new Set(['maj', 'min']);
+
+function fmtNote(n) { return n[0] + n.slice(1).replace('#', '♯').replace('b', '♭'); }
+function midiName(m) { return SHARP_NAMES[m % 12] + (Math.floor(m / 12) - 1); }
+
+// Spell each chord tone with the right letter (3rd = 2 letters up, 5th = 4 up...)
+function chordTones(root, typeKey) {
+  const t = CHORD_TYPES[typeKey];
+  const rl = root[0];
+  const racc = root.length > 1 ? (root[1] === '#' ? 1 : -1) : 0;
+  const rootPc = (NAT_PC[rl] + racc + 12) % 12;
+  const li = LETTERS.indexOf(rl);
+  return t.iv.map((iv, i) => {
+    const deg = t.degs[i];
+    const pc = (rootPc + iv) % 12;
+    const letter = LETTERS[(li + deg - 1) % 7];
+    const d = ((pc - NAT_PC[letter] + 18) % 12) - 6;
+    let name;
+    if (Math.abs(d) <= 1) name = letter + (d === 1 ? '#' : d === -1 ? 'b' : '');
+    else name = (root.indexOf('b') > 0 ? FLAT_NAMES : SHARP_NAMES)[pc];
+    return { deg: deg, pc: pc, iv: iv, name: name };
+  });
+}
+
+function chordPool() {
+  const roots = includeAccidentals ? ROOTS_NAT.concat(ROOTS_ACC) : ROOTS_NAT;
+  const out = [];
+  roots.forEach(r => enabledTypes.forEach(t => {
+    const tones = chordTones(r, t);
+    out.push({
+      root: r, type: t, key: 'chord:' + r + ':' + t,
+      name: fmtNote(r) + CHORD_TYPES[t].sym,
+      tones: tones, rootMidi: 60 + tones[0].pc,
+    });
+  }));
+  return out;
+}
+
+// ══ Mode switching ═══════════════════════════════════════════════════════════
+let appMode = 'notes';
+let advanceTimer = null, awaitingNext = false;
+let curChord = null, hintLevel = 0;
+const chordSel = new Set();
+
+function schedule(fn, ms) { clearTimeout(advanceTimer); advanceTimer = setTimeout(fn, ms); }
+
+function setAppMode(m) {
+  if (m === appMode) return;
+  closeWeak(); closeSheet();
+  appMode = m;
+  const isN = m === 'notes', isC = m === 'chords', isK = m === 'circle', isP = m === 'prog';
+  document.getElementById('tabNotes').classList.toggle('active', isN);
+  document.getElementById('tabChords').classList.toggle('active', isC);
+  document.getElementById('tabCircle').classList.toggle('active', isK);
+  document.getElementById('tabProg').classList.toggle('active', isP);
+  ['clefToggle', 'clefBadge', 'questionTitle', 'staffWrap', 'hearBtn', 'helpBtn', 'autoWrap']
+    .forEach(id => { document.getElementById(id).style.display = isN ? '' : 'none'; });
+  document.getElementById('chordPanel').style.display = isC ? '' : 'none';
+  document.getElementById('circlePanel').style.display = isK ? '' : 'none';
+  document.getElementById('progPanel').style.display = isP ? '' : 'none';
+  document.getElementById('chordActions').style.display = isN ? 'none' : '';
+  document.getElementById('clearBtn').style.display = (isC || isP) ? '' : 'none';
+  document.querySelector('.piano-section').style.display = '';
+  document.getElementById('pianoLabel').textContent =
+    (isC || isP) ? 'Tap each note of the chord, then Check (any octave, any order)'
+  : isK ? 'Tap the answer on the keyboard (any octave)'
+  : 'Click a key to answer';
+  SET_SIZE = isN ? 20 : isP ? 5 : 10;
+  if (!isN && helpOpen) toggleHelp();
+  resetSet();
+}
+
+// ══ Chord Builder ════════════════════════════════════════════════════════════
+function renderTypeChips() {
+  const el = document.getElementById('chordTypes');
+  el.innerHTML = '';
+  Object.keys(CHORD_TYPES).forEach(k => {
+    const b = document.createElement('button');
+    b.className = 'type-chip' + (enabledTypes.has(k) ? ' active' : '');
+    b.textContent = CHORD_TYPES[k].chip;
+    b.onclick = () => toggleType(k);
+    el.appendChild(b);
+  });
+}
+function toggleType(k) {
+  if (enabledTypes.has(k)) { if (enabledTypes.size === 1) return; enabledTypes.delete(k); }
+  else enabledTypes.add(k);
+  renderTypeChips();
+  resetSet();
+}
+
+function buildChordPiano(onKey) {
+  onKey = onKey || onChordKey;
+  const pianoEl = document.getElementById('piano');
+  pianoEl.innerHTML = '';
+  const whitesDiv = document.createElement('div');
+  whitesDiv.style.display = 'flex';
+  const blacks = [];
+  let i = 0;
+  for (let m = 60; m <= 84; m++) {
+    const pc = m % 12;
+    if ([1, 3, 6, 8, 10].indexOf(pc) >= 0) continue;
+    const btn = document.createElement('button');
+    btn.className = 'white-key';
+    btn.dataset.midi = m;
+    btn.textContent = SHARP_NAMES[pc];
+    btn.addEventListener('click', () => onKey(m));
+    whitesDiv.appendChild(btn);
+    if ([0, 2, 5, 7, 9].indexOf(pc) >= 0 && m < 84) blacks.push({ m: m + 1, left: (i + 1) * 38 - 11 });
+    i++;
+  }
+  pianoEl.appendChild(whitesDiv);
+  const blacksDiv = document.createElement('div');
+  blacksDiv.className = 'blacks';
+  blacks.forEach(({ m, left }) => {
+    const btn = document.createElement('button');
+    btn.className = 'black-key two';
+    btn.dataset.midi = m;
+    btn.style.left = left + 'px';
+    btn.innerHTML = fmtNote(SHARP_NAMES[m % 12]) + '<br>' + fmtNote(FLAT_NAMES[m % 12]);
+    btn.addEventListener('click', () => onKey(m));
+    blacksDiv.appendChild(btn);
+  });
+  pianoEl.appendChild(blacksDiv);
+  fitPiano();
+}
+
+function nextChord() {
+  answered = false; awaitingNext = false; hintLevel = 0; chordSel.clear();
+  const fb = document.getElementById('feedback');
+  fb.className = 'feedback hidden';
+  fb.textContent = ' ';
+  curChord = pickWeighted(chordPool(), i => i.key, curChord ? curChord.key : null);
+  buildChordPiano();
+  document.getElementById('chordBadge').textContent = curChord.tones.length === 4 ? '7th chord' : 'Triad';
+  document.getElementById('chordPrompt').textContent =
+    'Build ' + fmtNote(curChord.root) + ' ' + CHORD_TYPES[curChord.type].full;
+  document.getElementById('chordSymbol').textContent = curChord.name;
+  renderSlots();
+  updateChordMine();
+  updateHintBtn();
+  setPrimary('Check', true);
+}
+
+function renderSlots() {
+  const el = document.getElementById('chordSlots');
+  el.innerHTML = '';
+  curChord.tones.forEach((t, i) => {
+    if (i > 0) {
+      const g = document.createElement('div');
+      g.className = 'slot-gap';
+      g.textContent = '+' + (t.iv - curChord.tones[i - 1].iv);
+      el.appendChild(g);
+    }
+    const s = document.createElement('div');
+    s.className = 'slot';
+    s.innerHTML = '<div class="slot-deg">' + DEG_LABEL[t.deg] + '</div><div class="slot-note">?</div>';
+    el.appendChild(s);
+  });
+  document.getElementById('chordTip').style.display = 'none';
+}
+
+function revealSlots(mode) {
+  const slots = document.querySelectorAll('#chordSlots .slot');
+  curChord.tones.forEach((t, i) => {
+    const show = mode === 'all' || (mode === 'root' && i === 0);
+    slots[i].querySelector('.slot-note').textContent = show ? fmtNote(t.name) : '?';
+    slots[i].classList.toggle('filled', show);
+  });
+  document.querySelectorAll('#chordSlots .slot-gap').forEach(g => g.classList.add('show'));
+  const tip = document.getElementById('chordTip');
+  tip.textContent = 'The + numbers count half steps (every key, black ones too). ' + CHORD_TYPES[curChord.type].tip;
+  tip.style.display = '';
+}
+
+function updateChordMine() {
+  const names = [...chordSel].sort((a, b) => a - b).map(m => fmtNote(SHARP_NAMES[m % 12]));
+  ['chordMine', 'progMine'].forEach(id => { document.getElementById(id).textContent = 'Your notes: ' + (names.length ? names.join('  ') : 'none yet'); });
+  if (!answered) setPrimary('Check', chordSel.size === 0);
+}
+
+function setPrimary(label, disabled) {
+  const b = document.getElementById('chordPrimary');
+  b.textContent = label;
+  b.disabled = !!disabled;
+}
+
+function updateHintBtn() {
+  const b = document.getElementById('hintBtn');
+  b.disabled = answered || hintLevel >= 2;
+  b.textContent = hintLevel === 0 ? '💡 Hint'
+                : hintLevel === 1 ? '💡 ' + (appMode === 'circle' ? 'Show answer' : appMode === 'prog' ? 'Show chords' : 'Show notes') + ' (counts as a miss)'
+                : (appMode === 'circle' ? 'Answer shown' : appMode === 'prog' ? 'Chords shown' : 'Notes shown');
+}
+
+function hintChord() {
+  if (appMode === 'prog') { hintProg(); return; }
+  if (appMode === 'circle') { hintCircle(); return; }
+  if (answered || hintLevel >= 2) return;
+  hintLevel++;
+  revealSlots(hintLevel === 2 ? 'all' : 'root');
+  updateHintBtn();
+}
+
+function clearChord() {
+  if (answered) return;
+  chordSel.clear();
+  document.querySelectorAll('#piano .selected').forEach(k => k.classList.remove('selected'));
+  updateChordMine();
+}
+
+function onChordKey(m) {
+  playNote(midiName(m));
+  if (answered) return;
+  if (chordSel.has(m)) chordSel.delete(m); else chordSel.add(m);
+  const el = document.querySelector('#piano [data-midi="' + m + '"]');
+  if (el) el.classList.toggle('selected', chordSel.has(m));
+  updateChordMine();
+}
+
+function playChord(c) {
+  c.tones.forEach((t, i) => setTimeout(() => playNote(midiName(c.rootMidi + t.iv)), i * 90));
+}
+
+function checkChord() {
+  if (answered || chordSel.size === 0) return;
+  answered = true;
+  setQuestion++;
+  const want = new Set(curChord.tones.map(t => t.pc));
+  const got = new Set([...chordSel].map(m => m % 12));
+  const missing = curChord.tones.filter(t => !got.has(t.pc));
+  const extra = [...got].filter(p => !want.has(p));
+  const exact = missing.length === 0 && extra.length === 0;
+  const ok = exact && hintLevel < 2;
+
+  if (ok) setCorrect++;
+  else {
+    const n = curChord.name;
+    if (!noteStats[n]) noteStats[n] = { w: 0 };
+    noteStats[n].w++;
+    if (currentSetMisses.indexOf(n) < 0) currentSetMisses.push(n);
+  }
+  recordResult(curChord.key, ok);
+
+  document.querySelectorAll('#piano .white-key, #piano .black-key').forEach(k => {
+    const m = +k.dataset.midi;
+    k.classList.remove('selected');
+    if (chordSel.has(m)) k.classList.add(want.has(m % 12) ? 'correct-flash' : 'wrong-flash');
+  });
+  missing.forEach(t => {
+    const k = document.querySelector('#piano [data-midi="' + (curChord.rootMidi + t.iv) + '"]');
+    if (k) k.classList.add('correct-flash');
+  });
+  revealSlots('all');
+
+  const spelled = curChord.tones.map(t => fmtNote(t.name)).join(' ');
+  const label = fmtNote(curChord.root) + ' ' + CHORD_TYPES[curChord.type].full;
+  if (ok) {
+    showFeedback('✓ ' + label + ' = ' + spelled, 'correct');
+  } else if (exact) {
+    showFeedback('✓ Right notes, but you peeked, so it counts as a miss: ' + spelled, 'wrong');
+  } else {
+    let msg = '✗ ' + label + ' is ' + spelled + '.';
+    if (missing.length) msg += ' Missing ' + missing.map(t => fmtNote(t.name)).join(', ') + '.';
+    if (extra.length) msg += ' Extra ' + extra.map(p => fmtNote(SHARP_NAMES[p])).join(', ') + '.';
+    showFeedback(msg, 'wrong');
+  }
+
+  playChord(curChord);
+  updateScore();
+  logAnswer(curChord.name, ok);
+  updateHintBtn();
+
+  if (ok) {
+    setPrimary('✓', true);
+    schedule(advanceChord, 2000);
+  } else {
+    awaitingNext = true;
+    setPrimary('Next →', false);
+  }
+}
+
+function advanceChord() {
+  if (setQuestion >= SET_SIZE) endOfSet(); else nextChord();
+}
+
+function chordPrimary() {
+  if (appMode === 'prog') { progPrimary(); return; }
+  if (appMode === 'circle') {
+    if (awaitingNext) { awaitingNext = false; advanceCircle(); }
+    return;
+  }
+  if (appMode !== 'chords') return;
+  if (!answered) { checkChord(); return; }
+  if (awaitingNext) { awaitingNext = false; advanceChord(); }
+}
+
+// ══ Weak spots panel ═════════════════════════════════════════════════════════
+function labelForKey(k) {
+  const p = k.split(':');
+  if (p[0] === 'chord') return fmtNote(p[1]) + CHORD_TYPES[p[2]].sym;
+  if (p[0] === 'circle') return circleShort(k);
+  if (p[0] === 'prog') return progShort(k);
+  return p[2] + (p[1] === 'bass' ? ' bass' : '');
+}
+function openWeak() {
+  const prefix = appMode === 'chords' ? 'chord:' : appMode === 'circle' ? 'circle:' : appMode === 'prog' ? 'prog:' : 'note:';
+  document.getElementById('weakTitle').textContent =
+    appMode === 'chords' ? 'Chord weak spots' : appMode === 'circle' ? 'Circle and key weak spots' : appMode === 'prog' ? 'Progression weak spots' : 'Note weak spots';
+  const rows = Object.keys(store.items)
+    .filter(k => k.indexOf(prefix) === 0 && store.items[k].seen > 0)
+    .map(k => ({ k: k, v: store.items[k] }))
+    .sort((a, b) => (b.v.wrong / b.v.seen) - (a.v.wrong / a.v.seen) || b.v.seen - a.v.seen)
+    .slice(0, 10);
+  const list = document.getElementById('weakList');
+  list.innerHTML = '';
+  if (!rows.length) {
+    list.innerHTML = '<div class="weak-empty">Nothing yet. Play a set and your trouble spots show up here.</div>';
+  } else {
+    rows.forEach(({ k, v }) => {
+      const acc = Math.round((v.seen - v.wrong) / v.seen * 100);
+      const row = document.createElement('div');
+      row.className = 'weak-row';
+      row.innerHTML = '<span>' + labelForKey(k) + '</span><span class="weak-bar"><i style="width:' + acc +
+        '%"></i></span><span class="weak-pct">' + acc + '% of ' + v.seen + '</span>';
+      list.appendChild(row);
+    });
+  }
+  document.getElementById('weakPanel').style.display = 'flex';
+}
+function closeWeak() { document.getElementById('weakPanel').style.display = 'none'; }
+function resetStats() {
+  if (!confirm('Erase all your practice history and streak?')) return;
+  store = { items: {}, days: [] };
+  saveStore(); renderStreak(); closeWeak();
+}
+
+// ══ Circle of fifths & key signatures ════════════════════════════════════════
+const CIRCLE = [
+  { maj:'C',  min:'A',  n:0, acc:''  }, { maj:'G',  min:'E',  n:1, acc:'#' },
+  { maj:'D',  min:'B',  n:2, acc:'#' }, { maj:'A',  min:'F#', n:3, acc:'#' },
+  { maj:'E',  min:'C#', n:4, acc:'#' }, { maj:'B',  min:'G#', n:5, acc:'#' },
+  { maj:'F#', min:'D#', n:6, acc:'#' }, { maj:'Db', min:'Bb', n:5, acc:'b' },
+  { maj:'Ab', min:'F',  n:4, acc:'b' }, { maj:'Eb', min:'C',  n:3, acc:'b' },
+  { maj:'Bb', min:'G',  n:2, acc:'b' }, { maj:'F',  min:'D',  n:1, acc:'b' },
+];
+const SHARP_ORDER = ['F','C','G','D','A','E','B'];
+const FLAT_ORDER  = ['B','E','A','D','G','C','F'];
+const MAJ_NAT_IDX = [0, 1, 2, 3, 4, 5, 11];
+const MIN_NAT_IDX = [0, 1, 2, 11];
+const CIRCLE_KINDS = {
+  fifthUp:  { chip:'5th above' },
+  fourthUp: { chip:'4th above' },
+  keySig:   { chip:'Key signature' },
+  findKey:  { chip:'Find the key' },
+  relMinor: { chip:'Relative key' },
+};
+let enabledCircle = new Set(['fifthUp', 'keySig', 'findKey', 'relMinor']);
+let circleItem = null, circleQ = null;
+
+function sigLabel(c) { return c.n === 0 ? 'no sharps or flats' : c.n + (c.acc === '#' ? '♯' : '♭'); }
+function sigNotes(c) {
+  if (!c.n) return '';
+  return (c.acc === '#' ? SHARP_ORDER : FLAT_ORDER).slice(0, c.n).map(l => fmtNote(l + c.acc)).join(' ');
+}
+function sigVal(c) { return c.n === 0 ? '0' : c.n + c.acc; }
+function allIdx() { return CIRCLE.map((c, i) => i); }
+
+function circlePool() {
+  const maj = includeAccidentals ? allIdx() : MAJ_NAT_IDX;
+  const min = includeAccidentals ? allIdx() : MIN_NAT_IDX;
+  const out = [];
+  enabledCircle.forEach(kind => {
+    if (kind === 'fifthUp' || kind === 'fourthUp') {
+      maj.forEach(i => out.push({ kind: kind, idx: i, key: 'circle:' + kind + ':' + CIRCLE[i].maj }));
+    } else if (kind === 'keySig') {
+      maj.forEach(i => out.push({ kind: kind, idx: i, mode: 'major', key: 'circle:keySig:' + CIRCLE[i].maj + ':major' }));
+      min.forEach(i => out.push({ kind: kind, idx: i, mode: 'minor', key: 'circle:keySig:' + CIRCLE[i].min + ':minor' }));
+    } else if (kind === 'findKey') {
+      maj.forEach(i => out.push({ kind: kind, idx: i, key: 'circle:findKey:' + CIRCLE[i].maj }));
+    } else if (kind === 'relMinor') {
+      maj.forEach(i => out.push({ kind: kind, idx: i, mode: 'toMinor', key: 'circle:relMinor:' + CIRCLE[i].maj + ':toMinor' }));
+      min.forEach(i => out.push({ kind: kind, idx: i, mode: 'toMajor', key: 'circle:relMinor:' + CIRCLE[i].min + ':toMajor' }));
+    }
+  });
+  return out;
+}
+
+function rootPcOf(name) { return chordTones(name, 'maj')[0].pc; }
+
+function describeCircle(it) {
+  const c = CIRCLE[it.idx], f = fmtNote;
+  if (it.kind === 'fifthUp' || it.kind === 'fourthUp') {
+    const up5 = it.kind === 'fifthUp';
+    const tone = up5 ? chordTones(c.maj, 'maj')[2] : chordTones(c.maj, 'sus4')[1];
+    const word = up5 ? 'fifth' : 'fourth';
+    return {
+      type: 'note', badge: up5 ? 'Fifth above' : 'Fourth above',
+      prompt: 'What is a ' + word + ' above ' + f(c.maj) + '?',
+      pc: tone.pc, ansName: tone.name,
+      start: { idx: it.idx, ring: 'maj' }, end: { idx: (it.idx + (up5 ? 1 : 11)) % 12, ring: 'maj' },
+      tip: up5
+        ? 'A fifth is 7 half steps up, which is one step clockwise on the circle. Shortcut: count 5 letters up, then fix the sharp or flat.'
+        : 'A fourth is 5 half steps up, which is one step counter-clockwise on the circle. It is the same note as a fifth down.',
+      explain: 'A ' + word + ' above ' + f(c.maj) + ' is ' + f(tone.name) + ' (' + (up5 ? '7' : '5') +
+               ' half steps, one step ' + (up5 ? 'clockwise' : 'counter-clockwise') + ')',
+    };
+  }
+  if (it.kind === 'keySig') {
+    const isMin = it.mode === 'minor';
+    const tonic = isMin ? c.min : c.maj;
+    return {
+      type: 'sig', badge: 'Key signature', sigVal: sigVal(c), sigText: sigLabel(c),
+      prompt: 'How many sharps or flats in ' + f(tonic) + (isMin ? ' minor' : ' major') + '?',
+      start: { idx: it.idx, ring: isMin ? 'min' : 'maj' }, end: { idx: it.idx, ring: isMin ? 'min' : 'maj' },
+      tip: 'Each step clockwise from C adds a sharp. Each step counter-clockwise adds a flat. A minor key shares the signature of its relative major.',
+      explain: f(tonic) + (isMin ? ' minor' : ' major') + ' has ' + sigLabel(c) + (c.n ? ' (' + sigNotes(c) + ')' : '') +
+               (isMin ? ', same as ' + f(c.maj) + ' major' : ''),
+    };
+  }
+  if (it.kind === 'findKey') {
+    const count = c.n === 0 ? 'no sharps or flats' : c.n + (c.acc === '#' ? ' sharp' : ' flat') + (c.n > 1 ? 's' : '');
+    return {
+      type: 'note', badge: 'Find the key', prompt: 'Which major key has ' + count + '?',
+      pc: rootPcOf(c.maj), ansName: c.maj, start: null, end: { idx: it.idx, ring: 'maj' },
+      tip: 'Sharp keys go clockwise from C: G, D, A, E, B, F♯. Flat keys go counter-clockwise: F, B♭, E♭, A♭, D♭.',
+      explain: count.charAt(0).toUpperCase() + count.slice(1) + ' is ' + f(c.maj) + ' major' + (c.n ? ' (' + sigNotes(c) + ')' : ''),
+    };
+  }
+  const toMinor = it.mode === 'toMinor';
+  return {
+    type: 'note', badge: 'Relative key',
+    prompt: toMinor ? 'What is the relative minor of ' + f(c.maj) + ' major?' : 'What is the relative major of ' + f(c.min) + ' minor?',
+    pc: rootPcOf(toMinor ? c.min : c.maj), ansName: toMinor ? c.min : c.maj,
+    start: { idx: it.idx, ring: toMinor ? 'maj' : 'min' }, end: { idx: it.idx, ring: toMinor ? 'min' : 'maj' },
+    tip: 'The relative minor starts 3 half steps below the major key (it is the 6th note of the major scale). Same notes, same signature.',
+    explain: toMinor
+      ? 'The relative minor of ' + f(c.maj) + ' major is ' + f(c.min) + ' minor (3 half steps down). Both have ' + sigLabel(c)
+      : 'The relative major of ' + f(c.min) + ' minor is ' + f(c.maj) + ' major (3 half steps up). Both have ' + sigLabel(c),
+  };
+}
+
+function drawCircle(svg, st) {
+  svg.innerHTML = '';
+  const cx = 150, cy = 150;
+  const mk = (tag, attrs) => { const e = ns(tag); Object.keys(attrs).forEach(k => e.setAttribute(k, attrs[k])); svg.appendChild(e); return e; };
+  mk('circle', { cx: cx, cy: cy, r: 124, fill: '#fbfcff', stroke: '#e2e8f0', 'stroke-width': 1.5 });
+  mk('circle', { cx: cx, cy: cy, r: 84,  fill: 'none',    stroke: '#eef2f7', 'stroke-width': 1.5 });
+  const rings = { maj: { r: 104, rad: 18, size: 13 }, min: { r: 62, rad: 15, size: 11 } };
+  const same = (a, i, ring) => a && a.idx === i && a.ring === ring;
+  CIRCLE.forEach((c, i) => {
+    const ang = (-90 + i * 30) * Math.PI / 180;
+    ['maj', 'min'].forEach(ring => {
+      const R = rings[ring];
+      const x = cx + R.r * Math.cos(ang), y = cy + R.r * Math.sin(ang);
+      const isStart = same(st.start, i, ring), isEnd = same(st.end, i, ring) && st.all && !isStart;
+      const fill = isStart ? '#ede9fe' : isEnd ? '#d1fae5' : 'white';
+      const stroke = isStart ? '#6d28d9' : isEnd ? '#10b981' : '#ded6f7';
+      mk('circle', { cx: x, cy: y, r: R.rad, fill: fill, stroke: stroke, 'stroke-width': (isStart || isEnd) ? 2.5 : 1.2 });
+      if (st.all || isStart) {
+        const t = mk('text', { x: x, y: y + R.size * 0.35, 'text-anchor': 'middle', 'font-size': R.size,
+          'font-weight': 800, 'font-family': 'system-ui,sans-serif', fill: ring === 'maj' ? '#1e1b4b' : '#6d28d9' });
+        t.textContent = ring === 'maj' ? fmtNote(c.maj) : fmtNote(c.min) + 'm';
+      }
+    });
+    if (st.all) {
+      const sx = cx + 137 * Math.cos(ang), sy = cy + 137 * Math.sin(ang);
+      const s = mk('text', { x: sx, y: sy + 3, 'text-anchor': 'middle', 'font-size': 9, 'font-weight': 700,
+        'font-family': 'system-ui,sans-serif', fill: '#94a3b8' });
+      s.textContent = c.n === 0 ? '0' : c.n + (c.acc === '#' ? '♯' : '♭');
+    }
+  });
+  if (st.center) {
+    const t = mk('text', { x: cx, y: cy + 8, 'text-anchor': 'middle', 'font-size': 22, 'font-weight': 900,
+      'font-family': 'system-ui,sans-serif', fill: '#6d28d9' });
+    t.textContent = st.center;
+  }
+}
+
+function renderCircleChips() {
+  const el = document.getElementById('circleTypes');
+  el.innerHTML = '';
+  Object.keys(CIRCLE_KINDS).forEach(k => {
+    const b = document.createElement('button');
+    b.className = 'type-chip' + (enabledCircle.has(k) ? ' active' : '');
+    b.textContent = CIRCLE_KINDS[k].chip;
+    b.onclick = () => {
+      if (enabledCircle.has(k)) { if (enabledCircle.size === 1) return; enabledCircle.delete(k); } else enabledCircle.add(k);
+      renderCircleChips(); resetSet();
+    };
+    el.appendChild(b);
+  });
+}
+
+function nextCircle() {
+  answered = false; awaitingNext = false; hintLevel = 0;
+  const fb = document.getElementById('feedback');
+  fb.className = 'feedback hidden';
+  fb.textContent = ' ';
+  circleItem = pickWeighted(circlePool(), i => i.key, circleItem ? circleItem.key : null);
+  circleQ = describeCircle(circleItem);
+  document.getElementById('circleBadge').textContent = circleQ.badge;
+  document.getElementById('circlePrompt').textContent = circleQ.prompt;
+  const c = CIRCLE[circleItem.idx];
+  drawCircle(document.getElementById('circleSvg'),
+    { start: circleQ.start, end: null, all: false, center: circleItem.kind === 'findKey' ? (c.n ? c.n + (c.acc === '#' ? '♯' : '♭') : '0') : '' });
+  document.getElementById('circleTip').style.display = 'none';
+  const piano = document.querySelector('.piano-section');
+  const answers = document.getElementById('circleAnswers');
+  if (circleQ.type === 'note') {
+    piano.style.display = '';
+    answers.style.display = 'none';
+    buildChordPiano(onCircleKey);
+  } else {
+    piano.style.display = 'none';
+    answers.style.display = 'flex';
+    buildSigAnswers();
+  }
+  updateHintBtn();
+  setPrimary('Next →', true);
+}
+
+function buildSigAnswers() {
+  const el = document.getElementById('circleAnswers');
+  el.innerHTML = '';
+  const vals = ['0'];
+  for (let n = 1; n <= 6; n++) vals.push(n + '#');
+  for (let n = 1; n <= 6; n++) vals.push(n + 'b');
+  vals.forEach(v => {
+    const b = document.createElement('button');
+    b.className = 'ans-btn';
+    b.dataset.v = v;
+    b.textContent = v === '0' ? 'None' : v[0] + (v[1] === '#' ? '♯' : '♭');
+    b.onclick = () => onSigAnswer(v, b);
+    el.appendChild(b);
+  });
+}
+
+function onSigAnswer(v, btn) {
+  if (answered || !circleQ || circleQ.type !== 'sig') return;
+  const good = v === circleQ.sigVal;
+  btn.classList.add(good ? 'good' : 'bad');
+  if (!good) {
+    const k = document.querySelector('#circleAnswers [data-v="' + circleQ.sigVal + '"]');
+    if (k) k.classList.add('good');
+  }
+  finishCircle(good, btn.textContent);
+}
+
+function onCircleKey(m) {
+  playNote(midiName(m));
+  if (answered || !circleQ || circleQ.type !== 'note') return;
+  const good = (m % 12) === circleQ.pc;
+  const el = document.querySelector('#piano [data-midi="' + m + '"]');
+  if (el) el.classList.add(good ? 'correct-flash' : 'wrong-flash');
+  if (!good) {
+    const k = document.querySelector('#piano [data-midi="' + (60 + circleQ.pc) + '"]');
+    if (k) k.classList.add('correct-flash');
+  }
+  finishCircle(good, fmtNote(SHARP_NAMES[m % 12]));
+}
+
+function circleShort(key) {
+  const p = key.split(':');
+  if (p[1] === 'fifthUp')  return fmtNote(p[2]) + ' +5th';
+  if (p[1] === 'fourthUp') return fmtNote(p[2]) + ' +4th';
+  if (p[1] === 'keySig')   return fmtNote(p[2]) + (p[3] === 'minor' ? 'm' : '') + ' sig';
+  if (p[1] === 'findKey')  { const c = CIRCLE.filter(x => x.maj === p[2])[0]; return 'find ' + (c.n ? c.n + (c.acc === '#' ? '♯' : '♭') : '0'); }
+  return fmtNote(p[2]) + (p[3] === 'toMinor' ? ' rel min' : ' rel maj');
+}
+
+function finishCircle(isCorrect, picked) {
+  answered = true;
+  setQuestion++;
+  const ok = isCorrect && hintLevel < 2;
+  const short = circleShort(circleItem.key);
+  if (ok) setCorrect++;
+  else {
+    if (!noteStats[short]) noteStats[short] = { w: 0 };
+    noteStats[short].w++;
+    if (currentSetMisses.indexOf(short) < 0) currentSetMisses.push(short);
+  }
+  recordResult(circleItem.key, ok);
+  drawCircle(document.getElementById('circleSvg'), { start: circleQ.start, end: circleQ.end, all: true, center: '' });
+  if (ok) showFeedback('✓ ' + circleQ.explain, 'correct');
+  else if (isCorrect) showFeedback('✓ Right answer, but you peeked, so it counts as a miss. ' + circleQ.explain, 'wrong');
+  else showFeedback('✗ You picked ' + picked + '. ' + circleQ.explain, 'wrong');
+  if (circleQ.type === 'note') playNote(midiName(60 + circleQ.pc));
+  updateScore();
+  logAnswer(short, ok);
+  updateHintBtn();
+  if (ok) { setPrimary('✓', true); schedule(advanceCircle, 2300); }
+  else { awaitingNext = true; setPrimary('Next →', false); }
+}
+
+function advanceCircle() {
+  if (setQuestion >= SET_SIZE) endOfSet(); else nextCircle();
+}
+
+function hintCircle() {
+  if (answered || hintLevel >= 2) return;
+  hintLevel++;
+  const tip = document.getElementById('circleTip');
+  tip.textContent = circleQ.tip + (hintLevel === 2
+    ? ' Answer: ' + (circleQ.type === 'note' ? fmtNote(circleQ.ansName) : circleQ.sigText) + '. (It counts as a miss, but pick it to move on.)'
+    : '');
+  tip.style.display = '';
+  updateHintBtn();
+}
+
+function openSheet() {
+  drawCircle(document.getElementById('sheetSvg'), { all: true });
+  document.getElementById('sheetPanel').style.display = 'flex';
+}
+function closeSheet() { document.getElementById('sheetPanel').style.display = 'none'; }
+
+renderCircleChips();
+
+// ══ Chord progressions ═══════════════════════════════════════════════════════
+const MAJOR_SEMIS = [0, 2, 4, 5, 7, 9, 11];
+const MINOR_SEMIS = [0, 2, 3, 5, 7, 8, 10];
+// ch entries: [scale step (0 = 1st note), chord type, roman numeral]
+const PROGS = [
+  { id:'I-IV-V',       cat:'basic', mode:'major', ch:[[0,'maj','I'],[3,'maj','IV'],[4,'maj','V']] },
+  { id:'I-V-vi-IV',    cat:'basic', mode:'major', ch:[[0,'maj','I'],[4,'maj','V'],[5,'min','vi'],[3,'maj','IV']] },
+  { id:'vi-IV-I-V',    cat:'basic', mode:'major', ch:[[5,'min','vi'],[3,'maj','IV'],[0,'maj','I'],[4,'maj','V']] },
+  { id:'I-vi-IV-V',    cat:'basic', mode:'major', ch:[[0,'maj','I'],[5,'min','vi'],[3,'maj','IV'],[4,'maj','V']] },
+  { id:'ii-V-I',       cat:'tfo',   mode:'major', ch:[[1,'min','ii'],[4,'maj','V'],[0,'maj','I']] },
+  { id:'ii7-V7-Imaj7', cat:'jazz',  mode:'major', ch:[[1,'min7','ii7'],[4,'dom7','V7'],[0,'maj7','Imaj7']] },
+  { id:'Imaj7-vi7-ii7-V7', cat:'jazz', mode:'major', ch:[[0,'maj7','Imaj7'],[5,'min7','vi7'],[1,'min7','ii7'],[4,'dom7','V7']] },
+  { id:'I7-IV7-I7-V7', cat:'blues', mode:'major', ch:[[0,'dom7','I7'],[3,'dom7','IV7'],[0,'dom7','I7'],[4,'dom7','V7']] },
+  { id:'i-iv-V',       cat:'minor', mode:'minor', ch:[[0,'min','i'],[3,'min','iv'],[4,'maj','V']] },
+  { id:'i-VI-III-VII', cat:'minor', mode:'minor', ch:[[0,'min','i'],[5,'maj','VI'],[2,'maj','III'],[6,'maj','VII']] },
+  { id:'i-VII-VI-V',   cat:'minor', mode:'minor', ch:[[0,'min','i'],[6,'maj','VII'],[5,'maj','VI'],[4,'maj','V']] },
+];
+const PROG_CATS = { basic:'Pop & rock', tfo:'ii V I', jazz:'Jazz 7ths', blues:'Blues', minor:'Minor keys' };
+let enabledProg = new Set(['basic']);
+let progItem = null, progIdx = 0, progMiss = false, progPhase = 'build', progResults = [];
+
+function scaleNote(tonic, mode, step) {
+  const semis = (mode === 'minor' ? MINOR_SEMIS : MAJOR_SEMIS)[step];
+  const tl = tonic[0];
+  const tacc = tonic.length > 1 ? (tonic[1] === '#' ? 1 : -1) : 0;
+  const tpc = (NAT_PC[tl] + tacc + 12) % 12;
+  const letter = LETTERS[(LETTERS.indexOf(tl) + step) % 7];
+  const pc = (tpc + semis) % 12;
+  const diff = ((pc - NAT_PC[letter] + 18) % 12) - 6;
+  if (Math.abs(diff) <= 1) return letter + (diff === 1 ? '#' : diff === -1 ? 'b' : '');
+  return (tonic.indexOf('b') > 0 ? FLAT_NAMES : SHARP_NAMES)[pc];
+}
+
+function progPool() {
+  const majIdx = includeAccidentals ? allIdx() : [0, 1, 2, 3, 4, 11];
+  const minIdx = includeAccidentals ? allIdx() : MIN_NAT_IDX;
+  const out = [];
+  PROGS.forEach(p => {
+    if (!enabledProg.has(p.cat)) return;
+    (p.mode === 'minor' ? minIdx : majIdx).forEach(i => {
+      const tonic = p.mode === 'minor' ? CIRCLE[i].min : CIRCLE[i].maj;
+      out.push({ prog: p, tonic: tonic, mode: p.mode, key: 'prog:' + tonic + (p.mode === 'minor' ? 'm' : '') + ':' + p.id });
+    });
+  });
+  return out;
+}
+
+function buildProgItem(it) {
+  const chords = it.prog.ch.map(c => {
+    const root = scaleNote(it.tonic, it.mode, c[0]);
+    const tones = chordTones(root, c[1]);
+    return { r: c[2], type: c[1], root: root, name: fmtNote(root) + CHORD_TYPES[c[1]].sym, tones: tones, rootMidi: 60 + tones[0].pc };
+  });
+  return Object.assign({}, it, { chords: chords });
+}
+function progKeyLabel(it) { return fmtNote(it.tonic) + (it.mode === 'minor' ? ' minor' : ' major'); }
+function progShort(key) {
+  const p = key.split(':');
+  const minor = /m$/.test(p[1]);
+  const base = minor ? p[1].slice(0, -1) : p[1];
+  return p[2].replace(/-/g, ' ') + ' in ' + fmtNote(base) + (minor ? 'm' : '');
+}
+
+function renderProgChips() {
+  const el = document.getElementById('progTypes');
+  el.innerHTML = '';
+  Object.keys(PROG_CATS).forEach(k => {
+    const b = document.createElement('button');
+    b.className = 'type-chip' + (enabledProg.has(k) ? ' active' : '');
+    b.textContent = PROG_CATS[k];
+    b.onclick = () => {
+      if (enabledProg.has(k)) { if (enabledProg.size === 1) return; enabledProg.delete(k); } else enabledProg.add(k);
+      renderProgChips(); resetSet();
+    };
+    el.appendChild(b);
+  });
+}
+
+function paintProgSlots() {
+  const el = document.getElementById('progSlots');
+  if (!el.children.length || el.children.length !== progItem.chords.length) {
+    el.innerHTML = '';
+    progItem.chords.forEach(c => {
+      const s = document.createElement('div');
+      s.className = 'slot';
+      s.innerHTML = '<div class="slot-deg roman">' + c.r + '</div><div class="slot-note">?</div>';
+      el.appendChild(s);
+    });
+  }
+  [...el.children].forEach((s, i) => {
+    const c = progItem.chords[i], res = progResults[i];
+    const shown = res !== undefined || hintLevel >= 2 || progPhase === 'done';
+    s.querySelector('.slot-note').textContent = shown ? c.name : '?';
+    s.className = 'slot' + (res === true ? ' ok' : res === false ? ' bad' : (i === progIdx && progPhase !== 'done') ? ' current' : '');
+  });
+}
+
+function nextProg() {
+  hintLevel = 0; progMiss = false; progResults = []; progIdx = 0;
+  progItem = buildProgItem(pickWeighted(progPool(), i => i.key, progItem ? progItem.key : null));
+  document.getElementById('progBadge').textContent = 'Chord progression';
+  document.getElementById('progPrompt').textContent =
+    'Play ' + progItem.chords.map(c => c.r).join('  ') + ' in ' + progKeyLabel(progItem);
+  document.getElementById('progSlots').innerHTML = '';
+  document.getElementById('progTip').style.display = 'none';
+  startProgChord();
+}
+
+function startProgChord() {
+  answered = false; awaitingNext = false; progPhase = 'build'; chordSel.clear();
+  const fb = document.getElementById('feedback');
+  fb.className = 'feedback hidden';
+  fb.textContent = ' ';
+  buildChordPiano();
+  paintProgSlots();
+  updateChordMine();
+  updateHintBtn();
+  setPrimary('Check', true);
+}
+
+function checkProg() {
+  if (answered || progPhase !== 'build' || chordSel.size === 0) return;
+  answered = true;
+  const c = progItem.chords[progIdx];
+  const want = new Set(c.tones.map(t => t.pc));
+  const got = new Set([...chordSel].map(m => m % 12));
+  const missing = c.tones.filter(t => !got.has(t.pc));
+  const extra = [...got].filter(p => !want.has(p));
+  const ok = missing.length === 0 && extra.length === 0;
+  progResults[progIdx] = ok;
+  document.querySelectorAll('#piano .white-key, #piano .black-key').forEach(k => {
+    const m = +k.dataset.midi;
+    k.classList.remove('selected');
+    if (chordSel.has(m)) k.classList.add(want.has(m % 12) ? 'correct-flash' : 'wrong-flash');
+  });
+  missing.forEach(t => {
+    const k = document.querySelector('#piano [data-midi="' + (c.rootMidi + t.iv) + '"]');
+    if (k) k.classList.add('correct-flash');
+  });
+  playChord(c);
+  const spelled = c.tones.map(t => fmtNote(t.name)).join(' ');
+  if (ok) {
+    showFeedback('✓ ' + c.r + ' in ' + progKeyLabel(progItem) + ' is ' + c.name + ' = ' + spelled, 'correct');
+    progPhase = 'busy';
+    setPrimary('✓', true);
+    paintProgSlots();
+    schedule(progContinue, 1000);
+  } else {
+    progMiss = true;
+    let msg = '✗ ' + c.r + ' in ' + progKeyLabel(progItem) + ' is ' + c.name + ' = ' + spelled + '.';
+    if (missing.length) msg += ' Missing ' + missing.map(t => fmtNote(t.name)).join(', ') + '.';
+    if (extra.length) msg += ' Extra ' + extra.map(p => fmtNote(SHARP_NAMES[p])).join(', ') + '.';
+    showFeedback(msg, 'wrong');
+    progPhase = 'chordWrong';
+    setPrimary('Next →', false);
+    paintProgSlots();
+  }
+  updateHintBtn();
+}
+
+function progContinue() {
+  if (progIdx >= progItem.chords.length - 1) { finishProg(); return; }
+  progIdx++;
+  startProgChord();
+}
+
+function playProg(it) { it.chords.forEach((c, i) => setTimeout(() => playChord(c), i * 1000)); }
+
+function finishProg() {
+  answered = true; progPhase = 'done'; setQuestion++;
+  const ok = !progMiss && hintLevel < 2;
+  const short = progShort(progItem.key);
+  if (ok) setCorrect++;
+  else {
+    if (!noteStats[short]) noteStats[short] = { w: 0 };
+    noteStats[short].w++;
+    if (currentSetMisses.indexOf(short) < 0) currentSetMisses.push(short);
+  }
+  recordResult(progItem.key, ok);
+  paintProgSlots();
+  const line = progItem.chords.map((c, i) => c.name + (progResults[i] === false ? ' ✗' : '')).join('   ');
+  showFeedback((ok ? '✓ ' : progMiss ? '✗ ' : '✓ Right, but you peeked, so it counts as a miss: ') +
+    progItem.chords.map(c => c.r).join(' ') + ' in ' + progKeyLabel(progItem) + ' = ' + line, ok ? 'correct' : 'wrong');
+  playProg(progItem);
+  updateScore();
+  logAnswer(short, ok);
+  updateHintBtn();
+  if (ok) { setPrimary('✓', true); schedule(advanceProg, progItem.chords.length * 1000 + 1800); }
+  else { awaitingNext = true; setPrimary('Next →', false); }
+}
+
+function advanceProg() {
+  if (setQuestion >= SET_SIZE) endOfSet(); else nextProg();
+}
+
+function progPrimary() {
+  if (progPhase === 'build') checkProg();
+  else if (progPhase === 'chordWrong') progContinue();
+  else if (progPhase === 'done' && awaitingNext) { awaitingNext = false; advanceProg(); }
+}
+
+function hintProg() {
+  if (answered || hintLevel >= 2 || progPhase !== 'build') return;
+  hintLevel++;
+  const notes = [0, 1, 2, 3, 4, 5, 6].map(s => fmtNote(scaleNote(progItem.tonic, progItem.mode, s))).join(' ');
+  const tip = document.getElementById('progTip');
+  tip.textContent = progKeyLabel(progItem) + ' scale: ' + notes + '. Each numeral is a step of the scale, and the chord is built on that note. Uppercase is major, lowercase is minor.' +
+    (hintLevel === 2 ? ' Chords: ' + progItem.chords.map(c => c.name).join('  ') + '. (Counts as a miss.)' : '');
+  tip.style.display = '';
+  paintProgSlots();
+  updateHintBtn();
+}
+
+renderProgChips();
+
+loadStore();
+renderStreak();
+renderTypeChips();
+
 updateScore();
 nextQuestion();
 
@@ -1025,11 +2118,15 @@ nextQuestion();
 function toggleHelp() {
   helpOpen = !helpOpen;
   document.querySelector('.help-btn').classList.toggle('active', helpOpen);
-  if (currentNote) drawStaff(currentNote);
+  if (currentNote && appMode === 'notes') drawStaff(currentNote);
 }
 
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape' && helpOpen) toggleHelp();
+  if (appMode === 'chords' || appMode === 'circle' || appMode === 'prog') {
+    if (e.key === 'Enter' && e.target.tagName !== 'BUTTON') chordPrimary();
+    else if (e.key === 'Backspace' && appMode !== 'circle') clearChord();
+  }
 });
 </script>
 </body>

@@ -15,6 +15,10 @@ A browser-based music note reading trainer. Shows a note on a staff, you identif
 - Real piano audio via the Salamander Grand Piano sample library
 - Auto-play mode — plays the note automatically on each new question
 - Help overlay — labels every line and space on the staff with a mnemonic (treble: Every Good Boy Does Fine and F-A-C-E; bass: Grizzly Bears Don't Fear Anything and All Cows Eat Grass)
+- Chord Builder mode: "Build D minor", tap the notes, get spelled-out feedback. Triads, sus4, dim, aug and 7th chords, with a progressive hint that shows the half-step recipe (the 5th is always 7 half steps up, except dim and aug)
+- Circle & keys mode: fifth above, fourth above, key signatures, "which key has 3 flats?", and relative major/minor. A circle of fifths lights up the answer after each question, and a cheat sheet has the sharps/flats order tricks
+- Progressions mode: "Play I V vi IV in B-flat". You build each chord in turn and the numerals turn into chord names as you go. Pop and rock, ii V I, jazz 7ths, 12-bar blues and minor-key progressions in all 12 keys, with a hint that spells out the key's scale
+- Weak-spot engine: notes and chords you miss come back more often, ones you nail fade out. Stats are saved on your device, with a Weak spots screen and a daily practice streak
 - Installable phone app (PWA) — works offline after the first load, with a layout that fits phone screens
 
 ## Requirements
