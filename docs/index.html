@@ -548,6 +548,8 @@ h1 { color: var(--ink); font-size: 2rem; }
 }
 .recent:has(.answer-log:empty) { display: none; }
 
+.kbd-hint { font-size: 0.72rem; color: var(--muted); text-align: center; margin: -6px 0 14px; letter-spacing: 0.02em; }
+
 /* overlays */
 .set-summary { background: var(--surface); color: var(--ink); }
 .summary-score-num { color: var(--ink); }
@@ -720,6 +722,7 @@ h1 { color: var(--ink); font-size: 2rem; }
       <div class="chord-tip" id="circleTip" style="display:none"></div>
       <div class="chord-types" id="circleTypes"></div>
       <div class="answer-grid" id="circleAnswers" style="display:none"></div>
+      <div class="kbd-hint" id="sigHint" style="display:none">Keyboard: 0 to 6 = sharps · Ctrl + 1 to 6 = flats</div>
       <button class="link-btn" style="margin-bottom:12px" onclick="openSheet()">Open the cheat sheet</button>
     </div>
 
@@ -752,6 +755,7 @@ h1 { color: var(--ink); font-size: 2rem; }
 
     <div class="piano-section">
       <div class="piano-label" id="pianoLabel">Click a key to answer</div>
+      <div class="kbd-hint" id="kbdHint"></div>
       <div class="piano-container">
         <div class="piano" id="piano"></div>
       </div>
@@ -1509,6 +1513,7 @@ function setAppMode(m) {
   : isK ? 'Tap the answer on the keyboard (any octave)'
   : 'Click a key to answer';
   SET_SIZE = isN ? 20 : isP ? 5 : 10;
+  updateKbdHint();
   if (!isN && helpOpen) toggleHelp();
   resetSet();
 }
@@ -1953,10 +1958,12 @@ function nextCircle() {
   if (circleQ.type === 'note') {
     piano.style.display = '';
     answers.style.display = 'none';
+    document.getElementById('sigHint').style.display = 'none';
     buildChordPiano(onCircleKey);
   } else {
     piano.style.display = 'none';
     answers.style.display = 'flex';
+    document.getElementById('sigHint').style.display = '';
     buildSigAnswers();
   }
   updateHintBtn();
@@ -2273,6 +2280,48 @@ function hintProg() {
 }
 
 renderProgChips();
+
+// ══ Computer keyboard input ══════════════════════════════════════════════════
+// A-G = natural, Shift = sharp, Ctrl = flat, Alt = higher octave (notes mode)
+const KEY_PC = { KeyC: 0, KeyD: 2, KeyE: 4, KeyF: 5, KeyG: 7, KeyA: 9, KeyB: 11 };
+function overlayOpen() {
+  return ['setSummary', 'weakPanel', 'sheetPanel'].some(id => document.getElementById(id).style.display === 'flex');
+}
+function keyMidi(btn) { return btn.dataset.midi ? +btn.dataset.midi : NOTE_MIDI[btn.dataset.note]; }
+function pianoVisible() { return document.querySelector('.piano-section').style.display !== 'none'; }
+
+function updateKbdHint() {
+  const base = 'Keyboard: A to G · Shift = sharp (♯) · Ctrl = flat (♭)';
+  document.getElementById('kbdHint').textContent = appMode === 'notes' ? base + ' · Alt = higher octave' : base;
+}
+
+document.addEventListener('keydown', e => {
+  if (e.repeat || e.metaKey || overlayOpen()) return;
+  const tag = e.target.tagName;
+  if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+
+  // key signature questions: 0-6 = sharps, Ctrl+1-6 = flats
+  if (/^Digit[0-6]$/.test(e.code)) {
+    if (appMode === 'circle' && circleQ && circleQ.type === 'sig' && !answered) {
+      const n = +e.code[5];
+      const v = n === 0 ? '0' : n + (e.ctrlKey ? 'b' : '#');
+      const b = document.querySelector('#circleAnswers [data-v="' + v + '"]');
+      if (b) { e.preventDefault(); b.click(); }
+    }
+    return;
+  }
+
+  if (!(e.code in KEY_PC) || (e.shiftKey && e.ctrlKey) || !pianoVisible()) return;
+  const pc = (KEY_PC[e.code] + (e.shiftKey ? 1 : 0) - (e.ctrlKey ? 1 : 0) + 12) % 12;
+  const keys = [...document.querySelectorAll('#piano .white-key, #piano .black-key')]
+    .filter(k => keyMidi(k) % 12 === pc)
+    .sort((a, b) => keyMidi(a) - keyMidi(b));
+  if (!keys.length) return;
+  e.preventDefault();
+  keys[e.altKey && keys.length > 1 ? 1 : 0].click();
+});
+
+updateKbdHint();
 
 loadStore();
 renderStreak();
