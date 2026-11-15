@@ -18,7 +18,7 @@ A browser-based music note reading trainer. Shows a note on a staff, you identif
 - Chord Builder mode: "Build D minor", tap the notes, get spelled-out feedback. Triads, sus4, dim, aug and 7th chords, with a progressive hint that shows the half-step recipe (the 5th is always 7 half steps up, except dim and aug)
 - Circle & keys mode: fifth above, fourth above, key signatures, "which key has 3 flats?", and relative major/minor. A circle of fifths lights up the answer after each question, and a cheat sheet has the sharps/flats order tricks
 - Progressions mode: "Play I V vi IV in B-flat". You build each chord in turn and the numerals turn into chord names as you go. Pop and rock, ii V I, jazz 7ths, 12-bar blues and minor-key progressions in all 12 keys, with a hint that spells out the key's scale
-- Type your answers on the computer keyboard: A to G for natural notes, Shift for sharps, Ctrl for flats, Alt for the higher octave in notes mode, Enter to check a chord, Backspace to clear. For key signatures, 0 to 6 are sharps and Ctrl + 1 to 6 are flats
+- Type your answers on the computer keyboard: A to G for natural notes, Left Shift for sharps, Right Shift or Ctrl for flats, Alt for the higher octave in notes mode (every modifier is configurable under "change" below the keyboard), Enter to check a chord, Backspace to clear. For key signatures, 0 to 6 are sharps and Ctrl + 1 to 6 are flats
 - Weak-spot engine: notes and chords you miss come back more often, ones you nail fade out. Stats are saved on your device, with a Weak spots screen and a daily practice streak
 - Installable phone app (PWA) — works offline after the first load, with a layout that fits phone screens
 

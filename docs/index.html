@@ -550,6 +550,12 @@ h1 { color: var(--ink); font-size: 2rem; }
 
 .kbd-hint { font-size: 0.72rem; color: var(--muted); text-align: center; margin: -6px 0 14px; letter-spacing: 0.02em; }
 
+.kbd-hint a { color: var(--amber); text-decoration: none; font-weight: 700; }
+.keys-help { font-size: 0.8rem; color: var(--muted); text-align: center; max-width: 420px; }
+.keys-rows { width: 100%; max-width: 360px; display: flex; flex-direction: column; gap: 10px; }
+.keys-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-weight: 800; font-size: 0.9rem; color: var(--ink); }
+.keys-row select { background: var(--bg); color: var(--ink); border: 1px solid var(--line, #2a2f3a); border-radius: 10px; padding: 8px 10px; font: inherit; font-weight: 700; }
+
 /* overlays */
 .set-summary { background: var(--surface); color: var(--ink); }
 .summary-score-num { color: var(--ink); }
@@ -669,6 +675,15 @@ h1 { color: var(--ink); font-size: 2rem; }
       <div class="weak-list" id="weakList"></div>
       <button class="next-set-btn" onclick="closeWeak()">Back to practice</button>
       <button class="link-btn" onclick="resetStats()">Reset my stats</button>
+    </div>
+
+    <!-- Keyboard settings overlay -->
+    <div class="set-summary" id="keysPanel" style="display:none">
+      <div class="summary-section-label">Keyboard keys</div>
+      <div class="keys-help">Hold a key while you press A to G. Set a key to Nothing to leave it free for your browser.</div>
+      <div class="keys-rows" id="keysRows"></div>
+      <button class="next-set-btn" onclick="closeKeys()">Done</button>
+      <button class="link-btn" onclick="resetKeys()">Reset to defaults</button>
     </div>
 
     <div class="mode-tabs">
@@ -2281,44 +2296,101 @@ function hintProg() {
 
 renderProgChips();
 
-// ══ Computer keyboard input ══════════════════════════════════════════════════
-// A-G = natural, Shift = sharp, Ctrl = flat, Alt = higher octave (notes mode)
+// ══ Computer keyboard input (configurable) ═══════════════════════════════════
+// Each modifier can be: sharp, flat, octave (higher octave in notes mode) or none
 const KEY_PC = { KeyC: 0, KeyD: 2, KeyE: 4, KeyF: 5, KeyG: 7, KeyA: 9, KeyB: 11 };
+const KEYCFG_DEFAULT = { shiftL: 'sharp', shiftR: 'flat', ctrl: 'flat', alt: 'octave' };
+const KEYCFG_LABELS = { shiftL: 'Left Shift', shiftR: 'Right Shift', ctrl: 'Ctrl', alt: 'Alt' };
+const KEYCFG_ACTIONS = { sharp: 'Sharp (♯)', flat: 'Flat (♭)', octave: 'Higher octave', none: 'Nothing' };
+let keyCfg = Object.assign({}, KEYCFG_DEFAULT);
+try {
+  const saved = JSON.parse(localStorage.getItem('pianoQuiz.keys') || 'null');
+  if (saved) Object.keys(KEYCFG_DEFAULT).forEach(k => { if (saved[k] in KEYCFG_ACTIONS) keyCfg[k] = saved[k]; });
+} catch (e) {}
+function saveKeyCfg() { try { localStorage.setItem('pianoQuiz.keys', JSON.stringify(keyCfg)); } catch (e) {} }
+
+const heldShift = { ShiftLeft: false, ShiftRight: false };
+function trackShift(e, down) { if (e.code in heldShift) heldShift[e.code] = down; }
+window.addEventListener('keyup', e => trackShift(e, false));
+window.addEventListener('blur', () => { heldShift.ShiftLeft = heldShift.ShiftRight = false; });
+
+// which actions are active right now?
+function heldActions(e) {
+  const a = [];
+  if (heldShift.ShiftLeft) a.push(keyCfg.shiftL);
+  if (heldShift.ShiftRight) a.push(keyCfg.shiftR);
+  if (e.shiftKey && !heldShift.ShiftLeft && !heldShift.ShiftRight) a.push(keyCfg.shiftL); // fallback if the shift keydown was missed
+  if (e.ctrlKey) a.push(keyCfg.ctrl);
+  if (e.altKey) a.push(keyCfg.alt);
+  return a;
+}
+
 function overlayOpen() {
-  return ['setSummary', 'weakPanel', 'sheetPanel'].some(id => document.getElementById(id).style.display === 'flex');
+  return ['setSummary', 'weakPanel', 'sheetPanel', 'keysPanel'].some(id => document.getElementById(id).style.display === 'flex');
 }
 function keyMidi(btn) { return btn.dataset.midi ? +btn.dataset.midi : NOTE_MIDI[btn.dataset.note]; }
 function pianoVisible() { return document.querySelector('.piano-section').style.display !== 'none'; }
 
+function modsFor(action) {
+  const names = Object.keys(KEYCFG_LABELS).filter(k => keyCfg[k] === action).map(k => KEYCFG_LABELS[k]);
+  return names.length ? names.join(' / ') : null;
+}
 function updateKbdHint() {
-  const base = 'Keyboard: A to G · Shift = sharp (♯) · Ctrl = flat (♭)';
-  document.getElementById('kbdHint').textContent = appMode === 'notes' ? base + ' · Alt = higher octave' : base;
+  const parts = ['A to G'];
+  [['sharp', 'sharp (♯)'], ['flat', 'flat (♭)']].forEach(([a, t]) => { const m = modsFor(a); if (m) parts.push(m + ' = ' + t); });
+  if (appMode === 'notes') { const m = modsFor('octave'); if (m) parts.push(m + ' = higher octave'); }
+  document.getElementById('kbdHint').innerHTML = 'Keyboard: ' + parts.join(' · ') + ' · <a href="#" onclick="openKeys();return false">change</a>';
 }
 
+function openKeys() {
+  const box = document.getElementById('keysRows');
+  box.innerHTML = '';
+  Object.keys(KEYCFG_LABELS).forEach(k => {
+    const row = document.createElement('label');
+    row.className = 'keys-row';
+    row.innerHTML = '<span>' + KEYCFG_LABELS[k] + '</span>';
+    const sel = document.createElement('select');
+    Object.keys(KEYCFG_ACTIONS).forEach(a => {
+      const o = document.createElement('option'); o.value = a; o.textContent = KEYCFG_ACTIONS[a]; if (keyCfg[k] === a) o.selected = true; sel.appendChild(o);
+    });
+    sel.onchange = () => { keyCfg[k] = sel.value; saveKeyCfg(); updateKbdHint(); };
+    row.appendChild(sel); box.appendChild(row);
+  });
+  document.getElementById('keysPanel').style.display = 'flex';
+}
+function closeKeys() { document.getElementById('keysPanel').style.display = 'none'; }
+function resetKeys() { keyCfg = Object.assign({}, KEYCFG_DEFAULT); saveKeyCfg(); updateKbdHint(); openKeys(); }
+
 document.addEventListener('keydown', e => {
+  trackShift(e, true);
   if (e.repeat || e.metaKey || overlayOpen()) return;
   const tag = e.target.tagName;
-  if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+  if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+  // a Ctrl or Alt set to "Nothing" is left alone so browser shortcuts keep working
+  if ((e.ctrlKey && keyCfg.ctrl === 'none') || (e.altKey && keyCfg.alt === 'none')) return;
+  const acts = heldActions(e);
+  const sharps = acts.filter(a => a === 'sharp').length, flats = acts.filter(a => a === 'flat').length;
+  const higher = acts.includes('octave');
 
-  // key signature questions: 0-6 = sharps, Ctrl+1-6 = flats
+  // key signature questions: 0-6 = sharps, with a flat modifier held = flats
   if (/^Digit[0-6]$/.test(e.code)) {
     if (appMode === 'circle' && circleQ && circleQ.type === 'sig' && !answered) {
       const n = +e.code[5];
-      const v = n === 0 ? '0' : n + (e.ctrlKey ? 'b' : '#');
+      const v = n === 0 ? '0' : n + (flats && !sharps ? 'b' : '#');
       const b = document.querySelector('#circleAnswers [data-v="' + v + '"]');
       if (b) { e.preventDefault(); b.click(); }
     }
     return;
   }
 
-  if (!(e.code in KEY_PC) || (e.shiftKey && e.ctrlKey) || !pianoVisible()) return;
-  const pc = (KEY_PC[e.code] + (e.shiftKey ? 1 : 0) - (e.ctrlKey ? 1 : 0) + 12) % 12;
+  if (!(e.code in KEY_PC) || (sharps && flats) || !pianoVisible()) return;
+  const pc = (KEY_PC[e.code] + (sharps ? 1 : 0) - (flats ? 1 : 0) + 12) % 12;
   const keys = [...document.querySelectorAll('#piano .white-key, #piano .black-key')]
     .filter(k => keyMidi(k) % 12 === pc)
     .sort((a, b) => keyMidi(a) - keyMidi(b));
   if (!keys.length) return;
   e.preventDefault();
-  keys[e.altKey && keys.length > 1 ? 1 : 0].click();
+  keys[higher && keys.length > 1 ? 1 : 0].click();
 });
 
 updateKbdHint();
