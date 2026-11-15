@@ -4,7 +4,7 @@ Then commit and push. Bump CACHE in docs/sw.js so phones pick up the update."""
 import re
 src = open('note-quiz.html', encoding='utf-8').read()
 head = ('<link rel="manifest" href="manifest.json">\n'
-        '<meta name="theme-color" content="#5b21b6">\n'
+        '<meta name="theme-color" content="#14161c">\n'
         '<link rel="icon" href="icon-192.png">\n'
         '<link rel="apple-touch-icon" href="icon-192.png">\n')
 reg = ("<script>\nif ('serviceWorker' in navigator) {\n"
